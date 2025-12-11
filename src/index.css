@@ -1,0 +1,51 @@
+@import "tailwindcss";
+
+@layer utilities {
+  .font-ancient {
+    font-family: 'Cinzel Decorative', cursive;
+  }
+
+  .font-scholar {
+    font-family: 'Cormorant Garamond', serif;
+  }
+
+  .font-hand {
+    font-family: 'Reenie Beanie', cursive;
+  }
+
+  .text-shadow-glow {
+    text-shadow: 0 0 20px rgba(255, 160, 0, 0.3);
+  }
+
+  .text-shadow-blood {
+    text-shadow: 0 0 10px rgba(139, 0, 0, 0.5);
+  }
+
+  /* 3D Transform Utilities */
+  .perspective-2000 {
+    perspective: 2000px;
+  }
+
+  .transform-style-3d {
+    transform-style: preserve-3d;
+  }
+
+  .backface-hidden {
+    backface-visibility: hidden;
+  }
+
+  .rotate-y-180 {
+    transform: rotateY(180deg);
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  /* Robust Scroll Locking */
+  .no-scroll {
+    overflow: hidden !important;
+    height: 100vh;
+    /* Force height to prevent background scrolling geometry issues */
+  }
+}
