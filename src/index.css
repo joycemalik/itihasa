@@ -56,100 +56,53 @@ body {
   }
 }
 
-/* --- Storm & Atmosphere --- */
+/* --- Stone Inscription Effect --- */
+.stone-text {
+  color: #1a1a1a;
+  /* Dark text base */
 
-/* Rain Animation: Falls straight down */
-@keyframes rain-fall {
-  0% {
-    background-position: 0 0;
-  }
+  /* The Carved Effect:
+     - 1px white shadow at bottom-right (simulates light hitting the edge)
+     - 1px dark shadow at top-left (simulates the shadow inside the carving)
+  */
+  text-shadow:
+    1px 1px 0 rgba(255, 255, 255, 0.1),
+    -1px -1px 1px rgba(0, 0, 0, 0.8);
 
-  100% {
-    background-position: 0 100vh;
-  }
+  font-weight: 700;
+  letter-spacing: 0.05em;
+
+  /* Ensure text is absolutely rigid */
+  transform: none !important;
+  will-change: auto;
 }
 
-/* Rumble Animation: The world shakes, but the text stands still */
-@keyframes rumble {
-
-  0%,
-  100% {
-    transform: translate(0, 0);
+/* --- Environment Reaction --- */
+@keyframes shake-violent {
+  0% {
+    transform: translate(0, 0) rotate(0deg);
   }
 
   25% {
-    transform: translate(-1px, 1px);
+    transform: translate(-2px, 2px) rotate(-0.5deg);
   }
 
   50% {
-    transform: translate(1px, -1px);
+    transform: translate(2px, -1px) rotate(0.5deg);
   }
 
   75% {
-    transform: translate(-1px, -1px);
-  }
-}
-
-/* Lightning: Random erratic flashes */
-@keyframes lightning-flash {
-
-  0%,
-  90% {
-    opacity: 0;
+    transform: translate(-1px, -2px) rotate(-0.5deg);
   }
 
-  92% {
-    opacity: 0.3;
-  }
-
-  /* Quick flash */
-  93% {
-    opacity: 0;
-  }
-
-  94% {
-    opacity: 0.1;
-  }
-
-  /* Afterglow */
-  96% {
-    opacity: 0.6;
-  }
-
-  /* Big flash */
   100% {
-    opacity: 0;
+    transform: translate(0, 0) rotate(0deg);
   }
 }
 
-.animate-rain {
-  animation: rain-fall linear infinite;
-  will-change: background-position;
-}
-
-.animate-rumble {
-  animation: rumble 0.2s linear infinite;
-  /* Very fast, subtle vibration */
-}
-
-.animate-lightning {
-  animation: lightning-flash 8s infinite;
-  /* Occasional flashes */
-}
-
-/* --- Stone Inscription Effect --- */
-.stone-text {
-  /* "Wet Stone" Color */
-  color: #aebcd0;
-  /* The "Engraved" Illusion: A light shadow bottom-right, dark shadow top-left */
-  text-shadow:
-    -1px -1px 1px rgba(0, 0, 0, 0.7),
-    1px 1px 1px rgba(255, 255, 255, 0.2);
-  /* Make it feel heavy */
-  font-weight: 700;
-  letter-spacing: 0.05em;
-  /* Ensure it doesn't move */
-  transform: none !important;
+.shake-bg {
+  animation: shake-violent 0.2s infinite;
+  transform-origin: center center;
 }
 
 @keyframes pulse {
