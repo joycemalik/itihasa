@@ -50,6 +50,7 @@ export const StormOverlay = () => {
         // Particle Configuration
         const particles = [];
         const particleCount = 150; // Fewer particles for "subtle" feel, but distinct
+        let lightningOpacity = 0; // Flash state
 
         // Initialize Particles
         for (let i = 0; i < particleCount; i++) {
@@ -76,6 +77,23 @@ export const StormOverlay = () => {
             // Subtle Background Tint (Atmosphere)
             ctx.fillStyle = 'rgba(20, 24, 30, 0.2)'; // Very faint blue-black tint
             ctx.fillRect(0, 0, width, height);
+
+            // --- LIGHTNING FLASH ---
+            // Randomly trigger lightning (Very rare: ~0.1% chance per frame)
+            if (Math.random() > 0.999 && lightningOpacity <= 0) {
+                lightningOpacity = 0.8; // Bright flash
+                // Play Thunder Sound
+                const audio = new Audio('/thunder.mp3');
+                audio.volume = 0.4; // Not too loud
+                audio.play().catch(e => console.log('Audio play failed (user interaction needed?):', e));
+            }
+
+            // Draw Flash
+            if (lightningOpacity > 0) {
+                ctx.fillStyle = `rgba(255, 255, 255, ${lightningOpacity})`;
+                ctx.fillRect(0, 0, width, height);
+                lightningOpacity -= 0.02; // Fade out slowly
+            }
 
             // Draw Particles
             ctx.fillStyle = '#cbd5e1'; // Light slate color for visibility
