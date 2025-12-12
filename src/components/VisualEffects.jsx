@@ -38,32 +38,36 @@ export const TornPaper = ({ children, className }) => (
         {children}
     </div>
 );
+
 // --- NEW STORM COMPONENT ---
 export const StormOverlay = () => (
     <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
-        {/* REMOVED the solid background layer that was turning everything grey */}
 
-        {/* Rain Layer 1 (Fast & Thin) */}
-        <div className="absolute inset-0 opacity-30 animate-rain"
+        {/* Rain Layer 1: Fast, distinct streaks */}
+        <div className="absolute inset-[-100%] contrast-150 brightness-100 animate-rain"
             style={{
-                backgroundImage: `linear-gradient(to bottom, transparent 95%, #aebcd0 100%)`,
-                backgroundSize: '2px 80px'
+                transform: 'rotate(15deg)', // The slanted "Boat" look
+                backgroundImage: `linear-gradient(to bottom, transparent 96%, rgba(255,255,255,0.4) 100%)`,
+                backgroundSize: '2px 80px',
+                opacity: 0.6
             }}>
         </div>
 
-        {/* Rain Layer 2 (Slower & Thicker - Depth) */}
-        <div className="absolute inset-0 opacity-20 animate-rain"
+        {/* Rain Layer 2: Heavier, slower drops for depth */}
+        <div className="absolute inset-[-100%] contrast-150 brightness-100 animate-rain"
             style={{
-                backgroundImage: `linear-gradient(to bottom, transparent 98%, #8ba3c2 100%)`,
-                backgroundSize: '4px 120px',
-                animationDuration: '1.2s'
+                transform: 'rotate(20deg)',
+                backgroundImage: `linear-gradient(to bottom, transparent 98%, rgba(255,255,255,0.3) 100%)`,
+                backgroundSize: '3px 120px',
+                animationDuration: '0.7s',
+                opacity: 0.4
             }}>
         </div>
 
-        {/* Lightning Flash Layer - slightly reduced opacity to prevent text washout */}
-        <div className="absolute inset-0 bg-white mix-blend-overlay animate-lightning opacity-50"></div>
+        {/* Lightning Flash Layer - Warm/White light mode to be 'lit' */}
+        <div className="absolute inset-0 bg-white mix-blend-overlay animate-lightning opacity-40"></div>
 
-        {/* Vignette - Kept for atmosphere, but adjusted blend mode */}
-        <div className="absolute inset-0 bg-radial-gradient(circle, transparent 40%, black 100%) opacity-60 mix-blend-multiply"></div>
+        {/* Vignette - Subtle atmosphere without greying out the page */}
+        <div className="absolute inset-0 bg-radial-gradient(circle, transparent 60%, black 100%) opacity-40 mix-blend-multiply"></div>
     </div>
 );

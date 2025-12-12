@@ -55,3 +55,77 @@ body {
     /* Force height to prevent background scrolling geometry issues */
   }
 }
+
+/* --- Storm & Rain Animations --- */
+
+@keyframes rain-fall {
+  0% {
+    transform: translate(0, 0);
+  }
+
+  100% {
+    transform: translate(20px, 600px);
+  }
+}
+
+@keyframes lightning-flash {
+
+  0%,
+  92% {
+    opacity: 0;
+  }
+
+  93% {
+    opacity: 0.6;
+  }
+
+  /* Lower peak opacity to prevent washout */
+  94% {
+    opacity: 0.2;
+  }
+
+  96% {
+    opacity: 0.8;
+  }
+
+  /* Double flash but brief */
+  97% {
+    opacity: 0;
+  }
+}
+
+@keyframes boat-sway {
+
+  0%,
+  100% {
+    transform: rotate(-1.5deg) translateY(0px) translateX(0px);
+  }
+
+  25% {
+    transform: rotate(0deg) translateY(4px) translateX(2px);
+  }
+
+  50% {
+    transform: rotate(1.5deg) translateY(2px) translateX(-2px);
+  }
+
+  75% {
+    transform: rotate(0deg) translateY(6px) translateX(1px);
+  }
+}
+
+.animate-rain {
+  animation: rain-fall 0.4s linear infinite;
+  will-change: transform;
+}
+
+.animate-lightning {
+  animation: lightning-flash 6s infinite;
+  will-change: opacity;
+}
+
+.animate-sway {
+  animation: boat-sway 7s ease-in-out infinite;
+  transform-origin: center bottom;
+  will-change: transform;
+}
