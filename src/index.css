@@ -56,78 +56,100 @@ body {
   }
 }
 
-/* --- Storm & Rain Animations --- */
+/* --- Storm & Atmosphere --- */
 
+/* Rain Animation: Falls straight down */
 @keyframes rain-fall {
   0% {
+    background-position: 0 0;
+  }
+
+  100% {
+    background-position: 0 100vh;
+  }
+}
+
+/* Rumble Animation: The world shakes, but the text stands still */
+@keyframes rumble {
+
+  0%,
+  100% {
     transform: translate(0, 0);
   }
 
-  100% {
-    transform: translate(20px, 600px);
-  }
-}
-
-@keyframes lightning-flash {
-
-  0%,
-  92% {
-    opacity: 0;
-  }
-
-  93% {
-    opacity: 0.6;
-  }
-
-  /* Lower peak opacity to prevent washout */
-  94% {
-    opacity: 0.2;
-  }
-
-  96% {
-    opacity: 0.8;
-  }
-
-  /* Double flash but brief */
-  97% {
-    opacity: 0;
-  }
-}
-
-@keyframes boat-sway {
-
-  0%,
-  100% {
-    transform: rotate(-1.5deg) translateY(0px) translateX(0px);
-  }
-
   25% {
-    transform: rotate(0deg) translateY(4px) translateX(2px);
+    transform: translate(-1px, 1px);
   }
 
   50% {
-    transform: rotate(1.5deg) translateY(2px) translateX(-2px);
+    transform: translate(1px, -1px);
   }
 
   75% {
-    transform: rotate(0deg) translateY(6px) translateX(1px);
+    transform: translate(-1px, -1px);
+  }
+}
+
+/* Lightning: Random erratic flashes */
+@keyframes lightning-flash {
+
+  0%,
+  90% {
+    opacity: 0;
+  }
+
+  92% {
+    opacity: 0.3;
+  }
+
+  /* Quick flash */
+  93% {
+    opacity: 0;
+  }
+
+  94% {
+    opacity: 0.1;
+  }
+
+  /* Afterglow */
+  96% {
+    opacity: 0.6;
+  }
+
+  /* Big flash */
+  100% {
+    opacity: 0;
   }
 }
 
 .animate-rain {
-  animation: rain-fall 0.4s linear infinite;
-  will-change: transform;
+  animation: rain-fall linear infinite;
+  will-change: background-position;
+}
+
+.animate-rumble {
+  animation: rumble 0.2s linear infinite;
+  /* Very fast, subtle vibration */
 }
 
 .animate-lightning {
-  animation: lightning-flash 6s infinite;
-  will-change: opacity;
+  animation: lightning-flash 8s infinite;
+  /* Occasional flashes */
 }
 
-.animate-sway {
-  animation: boat-sway 7s ease-in-out infinite;
-  transform-origin: center bottom;
-  will-change: transform;
+/* --- Stone Inscription Effect --- */
+.stone-text {
+  /* "Wet Stone" Color */
+  color: #aebcd0;
+  /* The "Engraved" Illusion: A light shadow bottom-right, dark shadow top-left */
+  text-shadow:
+    -1px -1px 1px rgba(0, 0, 0, 0.7),
+    1px 1px 1px rgba(255, 255, 255, 0.2);
+  /* Make it feel heavy */
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  /* Ensure it doesn't move */
+  transform: none !important;
 }
 
 @keyframes pulse {

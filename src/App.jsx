@@ -114,7 +114,7 @@ const App = () => {
             <div className="relative z-10 p-2 bg-[#1a1510]" style={{ clipPath: "polygon(5% 0%, 100% 0%, 100% 90%, 95% 100%, 0% 100%, 0% 10%)" }}>
               <div className="relative overflow-hidden grayscale hover:grayscale-0 transition-all duration-1000">
                 <img
-                  src="https://images.unsplash.com/photo-1590053153540-366a6eeec4c8?q=80&w=1000&auto=format&fit=crop"
+                  src="https://images.unsplash.com/photo-1558981420-87aa9dad1c89?q=80&w=1000&auto=format&fit=crop"
                   alt="Ancient Inscriptions"
                   className="w-full h-[500px] object-cover opacity-80 group-hover:opacity-100 group-hover:scale-110 transition-all duration-1000"
                 />

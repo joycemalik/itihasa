@@ -41,8 +41,11 @@ const ArticleView = ({ article, onClose }) => {
                         </div>
                     )}
 
-                    {/* Add "animate-sway" class if it's the storm theme */}
-                    <div className={`max-w-5xl mx-auto relative z-10 text-center md:text-left space-y-12 my-20 ${isStormTheme ? 'animate-sway origin-bottom' : ''}`}>
+                    {/* CHANGE: 
+                        1. Removed 'animate-sway'
+                        2. Added conditional 'stone-text' class
+                    */}
+                    <div className={`max-w-5xl mx-auto relative z-10 text-center md:text-left space-y-12 my-20 ${isStormTheme ? 'stone-text' : ''}`}>
 
                         {/* Title Section */}
                         <div className="inline-flex items-center gap-3 text-[#8b3a3a] font-ancient text-lg tracking-[0.3em] border-b border-[#8b3a3a] pb-2 mb-4">

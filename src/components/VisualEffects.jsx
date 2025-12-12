@@ -39,35 +39,46 @@ export const TornPaper = ({ children, className }) => (
     </div>
 );
 
-// --- NEW STORM COMPONENT ---
+// --- UPDATED STORM COMPONENT (With 3D Depth) ---
 export const StormOverlay = () => (
-    <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
+    <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden animate-rumble">
 
-        {/* Rain Layer 1: Fast, distinct streaks */}
-        <div className="absolute inset-[-100%] contrast-150 brightness-100 animate-rain"
+        {/* Atmosphere: Dark Blue Tint */}
+        <div className="absolute inset-0 bg-[#12141d] opacity-40 mix-blend-multiply"></div>
+
+        {/* LAYER 1: Background Rain (Slow, Small, Dim) */}
+        {/* Adds depth by looking "far away" */}
+        <div className="absolute inset-0 opacity-20 animate-rain"
             style={{
-                transform: 'rotate(15deg)', // The slanted "Boat" look
-                backgroundImage: `linear-gradient(to bottom, transparent 96%, rgba(255,255,255,0.4) 100%)`,
-                backgroundSize: '2px 80px',
-                opacity: 0.6
+                backgroundImage: `linear-gradient(to bottom, transparent 90%, #64748b 100%)`,
+                backgroundSize: '1px 40px', // Very thin, short drops
+                animationDuration: '2s'     // Moves slower
             }}>
         </div>
 
-        {/* Rain Layer 2: Heavier, slower drops for depth */}
-        <div className="absolute inset-[-100%] contrast-150 brightness-100 animate-rain"
+        {/* LAYER 2: Midground Rain (Medium speed, Normal visibility) */}
+        <div className="absolute inset-0 opacity-30 animate-rain"
             style={{
-                transform: 'rotate(20deg)',
-                backgroundImage: `linear-gradient(to bottom, transparent 98%, rgba(255,255,255,0.3) 100%)`,
-                backgroundSize: '3px 120px',
-                animationDuration: '0.7s',
-                opacity: 0.4
+                backgroundImage: `linear-gradient(to bottom, transparent 95%, #94a3b8 100%)`,
+                backgroundSize: '2px 100px',
+                animationDuration: '1.2s'
             }}>
         </div>
 
-        {/* Lightning Flash Layer - Warm/White light mode to be 'lit' */}
-        <div className="absolute inset-0 bg-white mix-blend-overlay animate-lightning opacity-40"></div>
+        {/* LAYER 3: Foreground Rain (Fast, Bright, "In your face") */}
+        {/* This creates the feeling of being IN the storm */}
+        <div className="absolute inset-0 opacity-40 animate-rain"
+            style={{
+                backgroundImage: `linear-gradient(to bottom, transparent 96%, #cbd5e1 100%)`,
+                backgroundSize: '3px 150px', // Long, heavy streaks
+                animationDuration: '0.6s'    // Falls very fast
+            }}>
+        </div>
 
-        {/* Vignette - Subtle atmosphere without greying out the page */}
-        <div className="absolute inset-0 bg-radial-gradient(circle, transparent 60%, black 100%) opacity-40 mix-blend-multiply"></div>
+        {/* Lightning Layer */}
+        <div className="absolute inset-0 bg-white mix-blend-overlay animate-lightning opacity-30"></div>
+
+        {/* Heavy Vignette for "Tunnel Vision" */}
+        <div className="absolute inset-0 bg-radial-gradient(circle, transparent 30%, black 100%) opacity-70 mix-blend-multiply"></div>
     </div>
 );
