@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { X, ArrowRight } from 'lucide-react';
-import { GrainTexture, InkBlot, StormOverlay } from './VisualEffects'; // Import StormOverlay
+import { GrainTexture, InkBlot, StormOverlay } from './VisualEffects';
 
-const ArticleView = ({ article, onClose }) => {
+const ArticleView = ({ article, onClose, onStartJourney }) => {
     const [isFlipped, setIsFlipped] = useState(false);
 
     if (!article || !article.content) return null;
@@ -11,19 +11,17 @@ const ArticleView = ({ article, onClose }) => {
     const FrontIcon = front.icon;
     const BackIcon = back.icon;
 
-    // Check if this is the "War/Contradiction" article to trigger the storm
-    // Used to check ID, now checks theme property for better decoupling
     const isStormTheme = article.theme === 'storm';
 
     return (
-        <div className="fixed inset-0 z-[60] bg-[#1a1510] perspective-2000 overflow-hidden">
+        <div className="fixed inset-0 z-[60] bg-[#1a1510] perspective-2000 h-[100dvh] w-full">
             {/* Conditional Storm Effect */}
             <GrainTexture />
             {isStormTheme && <StormOverlay />}
 
             <button
                 onClick={onClose}
-                className="absolute top-8 right-8 z-50 text-[#e8e6e1] hover:text-[#8b3a3a] transition-colors p-2 bg-black/20 rounded-full backdrop-blur-sm cursor-pointer"
+                className="absolute top-6 right-6 z-50 text-[#e8e6e1] hover:text-[#8b3a3a] transition-colors p-2 bg-black/20 rounded-full backdrop-blur-sm cursor-pointer"
             >
                 <X className="w-8 h-8" />
             </button>
@@ -31,10 +29,9 @@ const ArticleView = ({ article, onClose }) => {
             <div className={`relative w-full h-full transition-transform duration-[1500ms] ease-in-out transform-style-3d ${isFlipped ? 'rotate-y-180' : ''}`}>
 
                 {/* --- FRONT FACE --- */}
-                <div className="absolute inset-0 backface-hidden bg-transparent text-[#e8e6e1] flex flex-col items-center justify-center p-6 overflow-y-auto">
+                <div className="absolute inset-0 backface-hidden bg-transparent text-[#e8e6e1] flex flex-col items-center justify-start md:justify-center p-6 overflow-y-auto overflow-x-hidden">
 
-                    {/* 3. BACKGROUND ELEMENTS (React to storm) */}
-                    {/* If storm is active, we SHOW the ink blot but shake it violently */}
+                    {/* Background Elements */}
                     <div className={`absolute inset-0 overflow-hidden pointer-events-none ${isStormTheme ? 'opacity-30' : ''}`}>
                         <InkBlot className="absolute top-[-10%] left-[-10%] w-[800px] h-[800px] text-black opacity-40 animate-pulse-slow" />
                         {!isStormTheme && (
@@ -42,25 +39,20 @@ const ArticleView = ({ article, onClose }) => {
                         )}
                     </div>
 
-                    {/* 4. TEXT CONTENT (Statued / Fixed) */}
-                    {/* Removed 'animate-sway', added 'stone-text' */}
-                    <div className={`max-w-5xl mx-auto relative z-10 text-center md:text-left space-y-12 my-20 ${isStormTheme ? 'stone-text' : ''}`}>
+                    {/* TEXT CONTENT */}
+                    <div className={`relative z-10 w-full max-w-5xl mx-auto text-center md:text-left space-y-8 md:space-y-12 my-20 pt-16 md:pt-0 ${isStormTheme ? 'stone-text' : ''}`}>
 
                         {/* Title Section */}
-                        <div className="inline-flex items-center gap-3 text-[#8b3a3a] font-ancient text-lg tracking-[0.3em] border-b border-[#8b3a3a] pb-2 mb-4">
+                        <div className="inline-flex items-center justify-center md:justify-start gap-3 text-[#8b3a3a] font-ancient text-lg tracking-[0.3em] border-b border-[#8b3a3a] pb-2 mb-4 w-full md:w-auto">
                             {FrontIcon && <FrontIcon className="w-6 h-6" />}
                             <span>{front.category}</span>
                         </div>
 
-                        <h1 className="font-ancient text-3xl md:text-4xl leading-tight text-shadow-glow">
-                            {front.title.split('invasion').length > 1 ? (
-                                <>
-                                    {front.title.split('invasion')[0]} <span className="text-[#8b3a3a] italic">invasion</span>{front.title.split('invasion')[1]}
-                                </>
-                            ) : front.title}
+                        <h1 className="font-ancient text-4xl md:text-5xl leading-tight text-shadow-glow break-words px-2">
+                            {front.title}
                         </h1>
 
-                        <div className="font-scholar text-base md:text-lg leading-relaxed text-[#d6cfc2] space-y-8">
+                        <div className="font-scholar text-base md:text-lg leading-relaxed text-[#d6cfc2] space-y-6 md:space-y-8 text-left px-2">
                             <p>
                                 {front.intro && (
                                     <>
@@ -92,9 +84,12 @@ const ArticleView = ({ article, onClose }) => {
                         </div>
 
                         {/* Button Area */}
-                        <div className="flex justify-center md:justify-start pt-8">
+                        <div className="flex justify-center md:justify-start pt-8 pb-12">
                             <button
-                                onClick={() => setIsFlipped(true)}
+                                onClick={() => {
+                                    if (onStartJourney) onStartJourney();
+                                    else setIsFlipped(true);
+                                }}
                                 className="groupZS relative px-8 py-4 md:px-10 md:py-5 bg-[#8b3a3a] text-[#e8e6e1] font-ancient text-lg md:text-xl tracking-widest overflow-hidden hover:bg-[#a64b4b] transition-all shadow-[0_0_40px_rgba(139,58,58,0.4)] cursor-pointer"
                             >
                                 <span className="relative z-10 flex items-center gap-3">
@@ -108,10 +103,10 @@ const ArticleView = ({ article, onClose }) => {
 
                 {/* --- BACK FACE (Keep as is) --- */}
                 <div className="absolute inset-0 backface-hidden bg-[#e8e6e1] rotate-y-180 flex items-center justify-center overflow-y-auto">
+                    {/* Simplified for brevity as we are focusing on Front Face fixes */}
                     <div className="absolute inset-0 pointer-events-none opacity-10">
                         <InkBlot className="absolute bottom-0 right-0 w-[600px] h-[600px] text-[#8b3a3a]" />
                     </div>
-
                     <div className="max-w-5xl mx-auto px-6 py-20 relative z-10">
                         <div className="text-center mb-16">
                             {BackIcon && (
@@ -122,7 +117,6 @@ const ArticleView = ({ article, onClose }) => {
                             <h2 className="font-ancient text-4xl md:text-7xl text-[#1a1510] mb-4">{back.title}</h2>
                             <p className="font-hand text-xl md:text-2xl text-[#5c5346] rotate-[-2deg]">{back.subtitle}</p>
                         </div>
-
                         <div className="grid md:grid-cols-3 gap-8 mb-12">
                             {back.blocks.map((i) => (
                                 <div key={i} className="h-64 bg-[#d6cfc2] animate-pulse rounded-sm relative overflow-hidden group">
@@ -130,7 +124,6 @@ const ArticleView = ({ article, onClose }) => {
                                 </div>
                             ))}
                         </div>
-
                         <div className="text-center font-scholar text-xl md:text-2xl text-[#8b3a3a] italic opacity-60">
                             Content Decryption in Progress...
                         </div>

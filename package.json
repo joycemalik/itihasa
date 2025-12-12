@@ -14,7 +14,10 @@
     "lucide-react": "^0.560.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
-    "react-router-dom": "^7.10.1"
+    "react-markdown": "^10.1.0",
+    "react-p5": "^1.4.1",
+    "react-router-dom": "^7.10.1",
+    "tone": "^15.1.22"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",

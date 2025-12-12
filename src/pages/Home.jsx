@@ -62,19 +62,17 @@ const Home = () => {
             </div>
 
             <nav className="fixed top-0 left-0 w-full z-50 p-8 flex justify-between items-start pointer-events-none">
-                <div className="pointer-events-auto cursor-pointer group">
+                {/* Home / Reset Button */}
+                <div className="pointer-events-auto cursor-pointer group" onClick={() => navigate('/')}>
                     <div className="relative">
                         <InkBlot className="w-16 h-16 text-[#2c241b] group-hover:scale-110 transition-transform duration-500" />
                         <span className="absolute inset-0 flex items-center justify-center font-ancient text-2xl text-[#d6cfc2]">ॐ</span>
                     </div>
                 </div>
+
+                {/* Right side is now empty, focusing all attention on the content */}
                 <div className="pointer-events-auto flex flex-col gap-4 items-end">
-                    {['THE VAULT', 'RELICS', 'THE FILES'].map((item) => (
-                        <a key={item} href="#" className="font-ancient text-sm tracking-[0.2em] uppercase hover:text-[#8b3a3a] transition-colors relative group">
-                            {item}
-                            <span className="absolute right-0 top-1/2 w-0 h-[2px] bg-[#8b3a3a] group-hover:w-full transition-all duration-300 -z-10"></span>
-                        </a>
-                    ))}
+                    {/* You can put a single "SUBSCRIBE" button here later if you want */}
                 </div>
             </nav>
 
@@ -128,7 +126,7 @@ const Home = () => {
                                 </p>
                             </div>
                             <div className="mt-8">
-                                <button className="px-6 py-2 border-2 border-[#2c241b] font-ancient text-xs tracking-widest hover:bg-[#2c241b] hover:text-[#e8e6e1] transition-colors cursor-pointer">
+                                <button onClick={() => document.getElementById('latest-chronicle').scrollIntoView({ behavior: 'smooth' })} className="px-6 py-2 border-2 border-[#2c241b] font-ancient text-xs tracking-widest hover:bg-[#2c241b] hover:text-[#e8e6e1] transition-colors cursor-pointer">
                                     [ THE ARCHIVE ]
                                 </button>
                             </div>
@@ -137,7 +135,7 @@ const Home = () => {
                 </div>
 
                 {/* Latest Chronicle */}
-                <section className="py-20 mb-32">
+                <section id="latest-chronicle" className="py-20 mb-32">
                     <div className="text-center mb-12">
                         <h3 className="font-hand text-2xl text-[#8b3a3a] mb-2 tracking-widest">LATEST CHRONICLE</h3>
                     </div>
@@ -184,9 +182,21 @@ const Home = () => {
                         <p className="font-scholar text-2xl italic mb-8">
                             "The dust has settled, but the echoes remain. We just have to listen."
                         </p>
-                        <button className="px-6 py-2 border-b-2 border-[#8b3a3a] font-ancient text-sm tracking-widest text-[#1a1510] hover:text-[#8b3a3a] transition-colors">
-                            [ SUBSCRIBE FOR UPDATES ]
-                        </button>
+                        <form name="subscribe" method="POST" data-netlify="true" className="flex flex-col items-center gap-4">
+                            <input type="hidden" name="form-name" value="subscribe" />
+
+                            <input
+                                type="email"
+                                name="email"
+                                placeholder="Enter your email"
+                                required
+                                className="px-4 py-2 bg-transparent border-b border-[#8b3a3a] text-[#1a1510] placeholder-[#5c5346] font-scholar focus:outline-none focus:border-black transition-colors text-center w-64"
+                            />
+
+                            <button type="submit" className="px-6 py-2 border-b-2 border-[#8b3a3a] font-ancient text-sm tracking-widest text-[#1a1510] hover:text-[#8b3a3a] transition-colors cursor-pointer">
+                                [ SUBSCRIBE FOR UPDATES ]
+                            </button>
+                        </form>
                     </div>
                 </footer>
             </main>
