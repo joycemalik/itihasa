@@ -9,7 +9,8 @@ export const articles = [
         color: 'text-[#8b3a3a]',
         hoverBorder: 'border-[#8b3a3a]',
         hoverBg: 'bg-[#8b3a3a]',
-        effect: 'ink', // Changed to ink for a "quiet" feel, or maybe blood if it's still intense? User said "Stripping away hype", "Quiet curiosity". Ink fits better.
+        effect: 'ink',
+        theme: 'storm', // Added theme property
         content: {
             type: 'contradiction',
             front: {

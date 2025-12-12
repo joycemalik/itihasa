@@ -12,8 +12,8 @@ const ArticleView = ({ article, onClose }) => {
     const BackIcon = back.icon;
 
     // Check if this is the "War/Contradiction" article to trigger the storm
-    // Note: User referred to 'wars', but ID is now 'bharat'.
-    const isStormTheme = article.id === 'bharat' || article.id === 'wars';
+    // Used to check ID, now checks theme property for better decoupling
+    const isStormTheme = article.theme === 'storm';
 
     return (
         <div className="fixed inset-0 z-[60] bg-[#1a1510] perspective-2000 overflow-hidden">

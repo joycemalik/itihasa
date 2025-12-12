@@ -30,7 +30,12 @@ const App = () => {
       });
     };
 
-    window.addEventListener('mousemove', handleMouseMove);
+    // Check if device has a fine pointer (mouse)
+    const isDesktop = window.matchMedia("(pointer: fine)").matches;
+    if (isDesktop) {
+      window.addEventListener('mousemove', handleMouseMove);
+    }
+
     return () => {
       window.removeEventListener('mousemove', handleMouseMove);
       if (requestRef) cancelAnimationFrame(requestRef);
@@ -150,8 +155,8 @@ const App = () => {
           </div>
 
           <div className="max-w-4xl mx-auto relative group cursor-pointer" onClick={() => {
-            const bharatArticle = articles.find(a => a.id === 'bharat');
-            if (bharatArticle) setActiveArticle(bharatArticle);
+            const featuredArticle = articles.find(a => a.id === 'bharat') || articles[0];
+            if (featuredArticle) setActiveArticle(featuredArticle);
           }}>
             <div className="absolute inset-0 bg-[#e3ded6] transform rotate-1 rounded-sm shadow-xl transition-transform duration-500 group-hover:rotate-0"></div>
             <div className="relative bg-[#e8e6e1] p-12 md:p-16 border border-[#d6cfc2] shadow-2xl flex flex-col items-center text-center transition-transform duration-500 group-hover:-translate-y-2">
