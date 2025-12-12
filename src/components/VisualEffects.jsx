@@ -36,7 +36,7 @@ export const TornPaper = ({ children, className }) => (
     </div>
 );
 
-// --- CANVAS STORM SYSTEM (The 3D Way) ---
+// --- CANVAS STORM SYSTEM (Redesigned: Subtle & Visible) ---
 export const StormOverlay = () => {
     const canvasRef = useRef(null);
 
@@ -47,20 +47,19 @@ export const StormOverlay = () => {
         let height = canvas.height = window.innerHeight;
         let animationFrameId;
 
-        // Configuration
-        const rainCount = 400; // Number of drops
-        const rainDrops = [];
-        let lightningTimer = 0;
-        let lightningOpacity = 0;
+        // Particle Configuration
+        const particles = [];
+        const particleCount = 150; // Fewer particles for "subtle" feel, but distinct
 
-        // Initialize Drops with 3D properties (z-index)
-        for (let i = 0; i < rainCount; i++) {
-            rainDrops.push({
+        // Initialize Particles
+        for (let i = 0; i < particleCount; i++) {
+            particles.push({
                 x: Math.random() * width,
                 y: Math.random() * height,
-                z: Math.random() * 1.5 + 0.5, // Depth factor (0.5 to 2)
-                len: Math.random() * 20 + 10,
-                speed: 0 // Will be calculated based on z
+                size: Math.random() * 2 + 0.5, // Visible size
+                speedY: Math.random() * 1 + 0.2, // Slow drizzle/dust
+                speedX: Math.random() * 0.5 - 0.25, // Slight drift
+                opacity: Math.random() * 0.5 + 0.3 // Visible opacity
             });
         }
 
@@ -74,44 +73,30 @@ export const StormOverlay = () => {
         const animate = () => {
             ctx.clearRect(0, 0, width, height);
 
-            // 1. Draw Lightning Flash (Background Illumination)
-            if (lightningOpacity > 0) {
-                ctx.fillStyle = `rgba(255, 255, 255, ${lightningOpacity})`;
-                ctx.fillRect(0, 0, width, height);
-                lightningOpacity -= 0.05; // Fade out speed
-            }
+            // Subtle Background Tint (Atmosphere)
+            ctx.fillStyle = 'rgba(20, 24, 30, 0.2)'; // Very faint blue-black tint
+            ctx.fillRect(0, 0, width, height);
 
-            // Randomly trigger lightning
-            if (Math.random() > 0.995 && lightningOpacity <= 0) {
-                lightningOpacity = Math.random() * 0.3 + 0.1; // Flash intensity
-            }
+            // Draw Particles
+            ctx.fillStyle = '#cbd5e1'; // Light slate color for visibility
 
-            // 2. Draw Rain Drops
-            ctx.strokeStyle = 'rgba(174, 188, 208, 0.5)'; // Rain color
-            ctx.lineWidth = 1;
-            ctx.beginPath();
+            particles.forEach(p => {
+                ctx.globalAlpha = p.opacity; // Use individual opacity
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                ctx.fill();
 
-            rainDrops.forEach(drop => {
-                // Physics based on Depth (z)
-                // Closer drops (higher z) are faster, longer, and thicker
-                const speed = drop.z * 15;
-                const length = drop.z * 20;
+                // Move
+                p.y += p.speedY;
+                p.x += p.speedX;
 
-                // Draw drop
-                ctx.moveTo(drop.x, drop.y);
-                ctx.lineTo(drop.x, drop.y + length);
-
-                // Update position
-                drop.y += speed;
-
-                // Reset when off screen
-                if (drop.y > height) {
-                    drop.y = -length;
-                    drop.x = Math.random() * width;
-                }
+                // Reset loops
+                if (p.y > height) p.y = -5;
+                if (p.x > width) p.x = 0;
+                if (p.x < 0) p.x = width;
             });
+            ctx.globalAlpha = 1.0; // Reset
 
-            ctx.stroke();
             animationFrameId = requestAnimationFrame(animate);
         };
 
@@ -126,8 +111,7 @@ export const StormOverlay = () => {
     return (
         <canvas
             ref={canvasRef}
-            className="fixed inset-0 z-0 pointer-events-none mix-blend-overlay"
-            style={{ opacity: 0.8 }}
+            className="absolute inset-0 z-10 pointer-events-none" // Absolute + Z-10 to ensure visibility
         />
     );
 };

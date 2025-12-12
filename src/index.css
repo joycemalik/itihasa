@@ -58,21 +58,14 @@ body {
 
 /* --- Stone Inscription Effect --- */
 .stone-text {
-  color: #1a1a1a;
-  /* Dark text base */
-
-  /* The Carved Effect:
-     - 1px white shadow at bottom-right (simulates light hitting the edge)
-     - 1px dark shadow at top-left (simulates the shadow inside the carving)
-  */
+  /* High contrast for readability */
+  color: #e5e7eb;
+  /* Sharp shadows to separate from background */
   text-shadow:
-    1px 1px 0 rgba(255, 255, 255, 0.1),
-    -1px -1px 1px rgba(0, 0, 0, 0.8);
-
+    0 2px 4px rgba(0, 0, 0, 0.8),
+    0 -1px 1px rgba(255, 255, 255, 0.1);
   font-weight: 700;
   letter-spacing: 0.05em;
-
-  /* Ensure text is absolutely rigid */
   transform: none !important;
   will-change: auto;
 }
