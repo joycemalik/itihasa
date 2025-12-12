@@ -38,3 +38,33 @@ export const TornPaper = ({ children, className }) => (
         {children}
     </div>
 );
+// --- NEW STORM COMPONENT ---
+export const StormOverlay = () => (
+    <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
+        {/* Dark Blue/Grey Atmosphere Overlay */}
+        <div className="absolute inset-0 bg-[#0f111a] opacity-60 mix-blend-multiply"></div>
+
+        {/* Rain Layer 1 (Fast & Thin) */}
+        <div className="absolute inset-0 opacity-30 animate-rain"
+            style={{
+                backgroundImage: `linear-gradient(to bottom, transparent 95%, #aebcd0 100%)`,
+                backgroundSize: '2px 80px'
+            }}>
+        </div>
+
+        {/* Rain Layer 2 (Slower & Thicker - Depth) */}
+        <div className="absolute inset-0 opacity-20 animate-rain"
+            style={{
+                backgroundImage: `linear-gradient(to bottom, transparent 98%, #8ba3c2 100%)`,
+                backgroundSize: '4px 120px',
+                animationDuration: '1.2s'
+            }}>
+        </div>
+
+        {/* Lightning Flash Layer */}
+        <div className="absolute inset-0 bg-white mix-blend-overlay animate-lightning"></div>
+
+        {/* Vignette to focus the eye */}
+        <div className="absolute inset-0 bg-radial-gradient(circle, transparent 40%, black 100%) opacity-80"></div>
+    </div>
+);

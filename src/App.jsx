@@ -1,45 +1,56 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react'; // Added useRef
 import { Scroll, Compass, Feather } from 'lucide-react';
 import { GrainTexture, InkBlot, BloodSplash, TornPaper } from './components/VisualEffects';
 import ArticleView from './components/ArticleView';
 import { articles } from './data/content';
 
-// --- Main Application ---
-
 const App = () => {
   const [activeArticle, setActiveArticle] = useState(null);
   const [hoveredArticleId, setHoveredArticleId] = useState(null);
-  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
 
-  // Parallax effect for ink blobs
+  // PERFORMANCE FIX: Use refs instead of state for animations
+  const blob1Ref = useRef(null);
+  const blob2Ref = useRef(null);
+
   useEffect(() => {
+    let requestRef;
     const handleMouseMove = (e) => {
-      setMousePos({ x: e.clientX, y: e.clientY });
+      // Use requestAnimationFrame to smooth out the animation
+      if (requestRef) return;
+      requestRef = requestAnimationFrame(() => {
+        const { clientX, clientY } = e;
+        // Directly update DOM to avoid React re-renders
+        if (blob1Ref.current) {
+          blob1Ref.current.style.transform = `translate(${clientX * -0.02}px, ${clientY * -0.02}px)`;
+        }
+        if (blob2Ref.current) {
+          blob2Ref.current.style.transform = `translate(${clientX * 0.03}px, ${clientY * 0.03}px) rotate(90deg)`;
+        }
+        requestRef = null;
+      });
     };
+
     window.addEventListener('mousemove', handleMouseMove);
-    return () => window.removeEventListener('mousemove', handleMouseMove);
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      if (requestRef) cancelAnimationFrame(requestRef);
+    }
   }, []);
 
-  // Lock Body Scroll when Article is Open
+  // SCROLLBAR FIX: Simpler lock logic
   useEffect(() => {
     if (activeArticle) {
-      document.body.classList.add('no-scroll');
-      document.documentElement.classList.add('no-scroll');
+      document.body.style.overflow = 'hidden';
     } else {
-      document.body.classList.remove('no-scroll');
-      document.documentElement.classList.remove('no-scroll');
+      document.body.style.overflow = '';
     }
-    return () => {
-      document.body.classList.remove('no-scroll');
-      document.documentElement.classList.remove('no-scroll');
-    }
+    return () => { document.body.style.overflow = ''; }
   }, [activeArticle]);
 
   return (
-    <div className="min-h-screen bg-[#d6cfc2] font-sans text-[#2c241b] overflow-x-hidden selection:bg-[#8b3a3a] selection:text-white relative">
+    <div className="min-h-screen bg-[#d6cfc2] font-sans text-[#2c241b] selection:bg-[#8b3a3a] selection:text-white relative">
       <GrainTexture />
 
-      {/* Show Article View if Active */}
       {activeArticle && (
         <ArticleView
           article={activeArticle}
@@ -47,19 +58,16 @@ const App = () => {
         />
       )}
 
-      {/* Floating Abstract Elements (Curiosity) */}
+      {/* FIXED: Attached refs to divs for direct manipulation */}
       <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
-        <InkBlot
-          className="absolute top-[-10%] right-[-10%] w-[600px] h-[600px] text-[#2c241b] opacity-10"
-          style={{ transform: `translate(${mousePos.x * -0.02}px, ${mousePos.y * -0.02}px)` }}
-        />
-        <InkBlot
-          className="absolute bottom-[-10%] left-[-10%] w-[500px] h-[500px] text-[#8b3a3a] opacity-5"
-          style={{ transform: `translate(${mousePos.x * 0.03}px, ${mousePos.y * 0.03}px) rotate(90deg)` }}
-        />
+        <div ref={blob1Ref} className="absolute top-[-10%] right-[-10%] w-[600px] h-[600px] text-[#2c241b] opacity-10 transition-transform duration-75 ease-out">
+          <InkBlot className="w-full h-full" />
+        </div>
+        <div ref={blob2Ref} className="absolute bottom-[-10%] left-[-10%] w-[500px] h-[500px] text-[#8b3a3a] opacity-5 transition-transform duration-75 ease-out">
+          <InkBlot className="w-full h-full" />
+        </div>
       </div>
 
-      {/* Navigation - Hidden/Mysterious */}
       <nav className="fixed top-0 left-0 w-full z-50 p-8 flex justify-between items-start pointer-events-none">
         <div className="pointer-events-auto cursor-pointer group" onClick={() => setActiveArticle(null)}>
           <div className="relative">
@@ -77,29 +85,27 @@ const App = () => {
         </div>
       </nav>
 
-      {/* Hero Section - The Scholar's Desk */}
       <main className="relative z-10 pt-24 pb-32 container mx-auto px-6 md:px-12">
-
-        {/* Title Area */}
-        <div className="text-center mb-24 relative">
+        {/* Hero Section */}
+        <div className="text-center mb-32 relative">
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-32 bg-[#b8ad9e] blur-3xl -z-10 opacity-40"></div>
-          <p className="font-hand text-2xl text-[#8b3a3a] rotate-[-2deg] mb-4">"We’re ditching the boring dates. We’re here for the bloodshed, the brilliance, and the absolute chaos of the past."</p>
           <h1 className="font-ancient text-5xl md:text-8xl text-[#1a1510] leading-[0.9] mb-6">
-            Ancient Narratives <br />
-            <span className="text-4xl md:text-6xl text-[#5c5346]">& Textual Worlds</span>
+            ANCIENT NARRATIVES <br />
+            <span className="text-4xl md:text-6xl text-[#5c5346]">& TEXTUAL WORLDS</span>
           </h1>
-          <div className="flex justify-center gap-4 text-[#8b3a3a]">
+          <div className="flex justify-center gap-4 text-[#8b3a3a] mb-8">
             <span className="text-2xl">~</span>
             <span className="text-2xl font-ancient">۞</span>
             <span className="text-2xl">~</span>
           </div>
+          <p className="font-hand text-2xl text-[#5c5346] max-w-2xl mx-auto">
+            "We read history as a list of events. What if we read it as a map of the human mind?"
+          </p>
         </div>
 
-        {/* The "Profile" - Presented as a Manuscript */}
+        {/* The Mission / The Inquiry */}
         <div className="flex flex-col lg:flex-row gap-16 items-center justify-center mb-40">
-
-          <div className="lg:w-1/2 relative group">
-            {/* Image Frame - Rough Edges */}
+          <div className="lg:w-1/2 max-w-xl">
             <div className="relative z-10 p-2 bg-[#1a1510]" style={{ clipPath: "polygon(5% 0%, 100% 0%, 100% 90%, 95% 100%, 0% 100%, 0% 10%)" }}>
               <div className="relative overflow-hidden grayscale hover:grayscale-0 transition-all duration-1000">
                 <img
@@ -110,126 +116,86 @@ const App = () => {
                 <div className="absolute inset-0 bg-[#8b3a3a] mix-blend-multiply opacity-20 group-hover:opacity-0 transition-opacity"></div>
               </div>
             </div>
-            {/* Decorative handwritten note */}
-            <div className="absolute -bottom-10 -right-10 max-w-[200px] font-hand text-xl text-[#2c241b] rotate-[-5deg] bg-[#e8e6e1] p-4 shadow-lg z-20" style={{ clipPath: "polygon(0% 0%, 100% 0%, 100% 85%, 90% 100%, 0% 100%)" }}>
-              "Tracing cultural migration through the whispers of myth."
-            </div>
           </div>
 
           <div className="lg:w-1/2 max-w-xl">
             <TornPaper className="bg-[#e8e6e1] hover:-translate-y-2 transition-transform duration-500">
               <Feather className="w-8 h-8 text-[#8b3a3a] mb-4" />
-              <h2 className="font-ancient text-3xl mb-6 text-[#1a1510]">THE MISSION</h2>
+              <h2 className="font-ancient text-3xl mb-6 text-[#1a1510]">THE INQUIRY</h2>
               <div className="font-scholar text-xl leading-relaxed text-[#4a3f35] space-y-4">
                 <p>
                   <span className="text-5xl float-left mr-3 mt-[-10px] text-[#8b3a3a] font-ancient">H</span>
-                  istory isn’t just polite statues and dusty books. It is raw, human drama. It is the engineering swag of the Cholas that makes modern skyscrapers look lazy. It is the psychological breakdown of heroes and the strategies of villains.
+                  istory is often taught as a series of answers. I believe it is actually a series of questions.
                 </p>
                 <p>
-                  We are here to bridge the gap between academic rigor and internet chaos. We dig into the Sanskrit texts, the forgotten inscriptions, and the "controversial" bits your history teacher skipped.
+                  When we look at the Mahabharata, do we see just a story, or do we see the complex morality of a civilization trying to understand war? When we look at a temple, do we see just stone, or the desperate human desire to touch the divine?
                 </p>
                 <p className="border-l-4 border-[#8b3a3a] pl-4 italic bg-[#d6cfc2]/30 py-2">
-                  Treating the Mahabharata like the political thriller it is, and architecture like the sci-fi tech it was.
+                  I am here to explore these questions. To move beyond the dry facts and find the logic, the fear, and the brilliance of the people who stood here before us.
                 </p>
               </div>
-              <div className="mt-8 flex gap-4">
-                <button className="px-6 py-2 border-2 border-[#2c241b] font-ancient text-xs tracking-widest hover:bg-[#2c241b] hover:text-[#e8e6e1] transition-colors">
-                  [ ENTER THE CHAOS ]
-                </button>
-                <button className="px-6 py-2 border-2 border-transparent text-[#8b3a3a] font-ancient text-xs tracking-widest hover:border-[#8b3a3a] transition-all">
-                  [ THE EVIDENCE ]
+              <div className="mt-8">
+                <button className="px-6 py-2 border-2 border-[#2c241b] font-ancient text-xs tracking-widest hover:bg-[#2c241b] hover:text-[#e8e6e1] transition-colors cursor-pointer">
+                  [ THE ARCHIVE ]
                 </button>
               </div>
             </TornPaper>
           </div>
         </div>
 
-        {/* Interactive Curiosity Grid - "No Straight Lines" */}
-        <section className="py-20">
-          <div className="text-center mb-16">
-            <h3 className="font-hand text-3xl text-[#5c5346] mb-2">Curiosities & Inquiries</h3>
-            <h2 className="font-ancient text-5xl text-[#1a1510]">Choose a Path</h2>
+        {/* The Featured Section - Latest Chronicle */}
+        <section className="py-20 mb-32">
+          <div className="text-center mb-12">
+            <h3 className="font-hand text-2xl text-[#8b3a3a] mb-2 tracking-widest">LATEST CHRONICLE</h3>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-8">
+          <div className="max-w-4xl mx-auto relative group cursor-pointer" onClick={() => {
+            const bharatArticle = articles.find(a => a.id === 'bharat');
+            if (bharatArticle) setActiveArticle(bharatArticle);
+          }}>
+            <div className="absolute inset-0 bg-[#e3ded6] transform rotate-1 rounded-sm shadow-xl transition-transform duration-500 group-hover:rotate-0"></div>
+            <div className="relative bg-[#e8e6e1] p-12 md:p-16 border border-[#d6cfc2] shadow-2xl flex flex-col items-center text-center transition-transform duration-500 group-hover:-translate-y-2">
+              <div className="absolute top-0 left-0 w-full h-1 bg-[#8b3a3a] opacity-50"></div>
 
-            {articles.map((article) => {
-              const Icon = article.icon;
-              const isHovered = hoveredArticleId === article.id;
+              <div className="mb-6">
+                <Compass className="w-12 h-12 text-[#8b3a3a]" />
+              </div>
 
-              return (
-                <div
-                  key={article.id}
-                  className="relative group cursor-pointer min-h-[400px] flex items-center justify-center p-8"
-                  onMouseEnter={() => setHoveredArticleId(article.id)}
-                  onMouseLeave={() => setHoveredArticleId(null)}
-                  onClick={() => {
-                    if (article.content) setActiveArticle(article);
-                  }}
-                >
-                  {/* Dynamic Background */}
-                  <div className={`absolute inset-0 bg-[#e3ded6] transition-all duration-500 rounded-[40%_60%_70%_30%/40%_50%_60%_50%] group-hover:rounded-[50%_50%_30%_70%/60%_40%_70%_30%] shadow-lg group-hover:shadow-2xl ${isHovered ? 'scale-105' : 'scale-100'} ${article.effect === 'gold' ? 'group-hover:shadow-[0_0_30px_rgba(212,175,55,0.3)]' : ''} ${article.effect === 'gold' ? 'group-hover:border-[#D4AF37] border-2 border-transparent' : ''}`}></div>
+              <h2 className="font-ancient text-4xl md:text-6xl text-[#1a1510] mb-6">THE ORIGINS OF BHARAT</h2>
 
-                  {/* Specific Effects */}
-                  {article.effect === 'blood' && <BloodSplash active={isHovered} />}
+              <p className="font-hand text-xl text-[#5c5346] mb-8 italic">
+                "When does a piece of land become an idea?"
+              </p>
 
-                  {article.effect === 'ink' && (
-                    <>
-                      <div className="absolute inset-0 bg-[#1a1510] transition-all duration-500 rounded-[60%_40%_30%_70%/60%_30%_70%_40%] shadow-lg group-hover:scale-105"></div>
-                      <div className="absolute inset-0 opacity-0 group-hover:opacity-20 bg-[url('https://www.transparenttextures.com/patterns/black-scales.png')] transition-opacity duration-500 rounded-[60%_40%_30%_70%/60%_30%_70%_40%]"></div>
-                    </>
-                  )}
+              <div className="font-scholar text-lg md:text-xl text-[#4a3f35] max-w-2xl leading-relaxed mb-10">
+                <p>
+                  We say the name "Bharat" effortlessly. But where did it begin?
+                  Was it a King? A Tribe? Or was it a fire lit thousands of years ago that refused to go out?
+                  We trace the word back to its first breath in the Rig Veda to understand not just a name, but an identity.
+                </p>
+              </div>
 
-                  {/* Content */}
-                  <div className={`relative z-10 text-center transition-transform duration-300 ${isHovered ? '-translate-y-4' : ''} ${article.effect === 'ink' ? 'text-[#e8e6e1]' : ''}`}>
-                    <div className={`w-16 h-16 mx-auto mb-6 flex items-center justify-center rounded-full border-2 border-[#2c241b] transition-colors duration-300 
-                                ${article.effect === 'ink' ? 'border-[#e8e6e1] group-hover:bg-[#e8e6e1] group-hover:text-[#1a1510]' : ''}
-                                ${article.effect === 'blood' && isHovered ? 'bg-[#8b3a3a] border-[#8b3a3a] text-white' : ''}
-                                ${article.effect === 'gold' && isHovered ? 'border-[#D4AF37] text-[#D4AF37]' : ''}
-                            `}>
-                      <Icon className="w-8 h-8" />
-                    </div>
-
-                    <h3 className={`font-ancient text-2xl mb-4 transition-colors ${article.effect === 'gold' ? 'group-hover:text-[#D4AF37] text-shadow-glow' : ''} ${article.effect === 'blood' ? 'group-hover:text-[#8b3a3a]' : ''}`}>
-                      {article.title}
-                    </h3>
-
-                    <p className={`font-scholar text-lg opacity-80 mx-auto ${article.effect === 'ink' ? 'opacity-70 group-hover:opacity-100' : ''}`}>
-                      {article.teaser}
-                    </p>
-
-                    {article.content && isHovered && (
-                      <p className="font-hand text-[#8b3a3a] mt-4 animate-pulse">
-                        Click to bleed the truth...
-                      </p>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-
+              <button className="px-8 py-3 bg-[#1a1510] text-[#e8e6e1] font-ancient text-sm tracking-[0.2em] hover:bg-[#8b3a3a] transition-colors">
+                [ READ THE FULL CHRONICLE ]
+              </button>
+            </div>
           </div>
         </section>
 
-        {/* Footer / Call to Action */}
         <footer className="mt-32 relative">
           <div className="absolute inset-0 flex items-center justify-center opacity-10 pointer-events-none">
             <InkBlot className="w-[800px] h-[800px]" />
           </div>
-
           <div className="relative z-10 text-center max-w-2xl mx-auto">
             <Scroll className="w-12 h-12 text-[#8b3a3a] mx-auto mb-6" />
             <p className="font-scholar text-2xl italic mb-8">
-              "Warning: This archive contains heavy doses of reality, brilliance, and existential dread. Browse at your own risk."
+              "The dust has settled, but the echoes remain. We just have to listen."
             </p>
-            <div className="inline-block relative group cursor-pointer">
-              <span className="font-ancient text-3xl text-[#1a1510] border-b-2 border-[#1a1510] group-hover:text-[#8b3a3a] group-hover:border-[#8b3a3a] transition-colors pb-2">
-                JOIN THE ADVENTURE
-              </span>
-            </div>
+            <button className="px-6 py-2 border-b-2 border-[#8b3a3a] font-ancient text-sm tracking-widest text-[#1a1510] hover:text-[#8b3a3a] transition-colors">
+              [ SUBSCRIBE FOR UPDATES ]
+            </button>
           </div>
         </footer>
-
       </main>
     </div>
   );
