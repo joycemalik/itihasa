@@ -18,7 +18,8 @@ const ArticleView = ({ article, onClose }) => {
     return (
         <div className="fixed inset-0 z-[60] bg-[#1a1510] perspective-2000 overflow-hidden">
             {/* Conditional Storm Effect */}
-            {isStormTheme ? <StormOverlay /> : <GrainTexture />}
+            <GrainTexture />
+            {isStormTheme && <StormOverlay />}
 
             <button
                 onClick={onClose}

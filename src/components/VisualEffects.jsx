@@ -41,8 +41,7 @@ export const TornPaper = ({ children, className }) => (
 // --- NEW STORM COMPONENT ---
 export const StormOverlay = () => (
     <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
-        {/* Dark Blue/Grey Atmosphere Overlay */}
-        <div className="absolute inset-0 bg-[#0f111a] opacity-60 mix-blend-multiply"></div>
+        {/* REMOVED the solid background layer that was turning everything grey */}
 
         {/* Rain Layer 1 (Fast & Thin) */}
         <div className="absolute inset-0 opacity-30 animate-rain"
@@ -61,10 +60,10 @@ export const StormOverlay = () => (
             }}>
         </div>
 
-        {/* Lightning Flash Layer */}
-        <div className="absolute inset-0 bg-white mix-blend-overlay animate-lightning"></div>
+        {/* Lightning Flash Layer - slightly reduced opacity to prevent text washout */}
+        <div className="absolute inset-0 bg-white mix-blend-overlay animate-lightning opacity-50"></div>
 
-        {/* Vignette to focus the eye */}
-        <div className="absolute inset-0 bg-radial-gradient(circle, transparent 40%, black 100%) opacity-80"></div>
+        {/* Vignette - Kept for atmosphere, but adjusted blend mode */}
+        <div className="absolute inset-0 bg-radial-gradient(circle, transparent 40%, black 100%) opacity-60 mix-blend-multiply"></div>
     </div>
 );
