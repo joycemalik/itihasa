@@ -1,13 +1,12 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 
-// A grainy texture overlay to make everything look like old paper
+// ... Keep GrainTexture, InkBlot, BloodSplash, TornPaper exactly as they were ...
 export const GrainTexture = () => (
     <div className="pointer-events-none fixed inset-0 z-50 opacity-[0.08] mix-blend-multiply"
         style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")` }}>
     </div>
 );
 
-// Organic Ink Blot Shape
 export const InkBlot = ({ className, color = "fill-stone-900", style }) => (
     <svg viewBox="0 0 200 200" className={className} style={style} xmlns="http://www.w3.org/2000/svg">
         <path
@@ -18,7 +17,6 @@ export const InkBlot = ({ className, color = "fill-stone-900", style }) => (
     </svg>
 );
 
-// Blood Splash Effect Component
 export const BloodSplash = ({ active }) => (
     <div className={`absolute inset-0 pointer-events-none transition-opacity duration-700 ${active ? 'opacity-100' : 'opacity-0'}`}>
         <svg viewBox="0 0 200 200" className="w-full h-full mix-blend-multiply text-red-900" xmlns="http://www.w3.org/2000/svg">
@@ -30,7 +28,6 @@ export const BloodSplash = ({ active }) => (
     </div>
 );
 
-// Torn Paper Container
 export const TornPaper = ({ children, className }) => (
     <div className={`relative p-8 bg-[#F4F1EA] shadow-xl ${className}`} style={{
         clipPath: "polygon(3% 0, 7% 1%, 11% 0%, 16% 2%, 20% 0, 23% 2%, 28% 2%, 32% 1%, 35% 4%, 39% 3%, 41% 1%, 45% 0%, 50% 2%, 55% 0, 60% 2%, 65% 1%, 66% 4%, 70% 2%, 75% 0, 80% 2%, 83% 1%, 89% 0, 91% 2%, 94% 1%, 98% 3%, 100% 0, 100% 7%, 99% 11%, 100% 16%, 98% 20%, 100% 25%, 99% 29%, 100% 34%, 99% 39%, 100% 45%, 98% 51%, 100% 57%, 99% 62%, 100% 68%, 98% 74%, 100% 81%, 99% 87%, 100% 93%, 98% 100%, 93% 99%, 88% 100%, 84% 98%, 79% 100%, 74% 99%, 69% 100%, 64% 98%, 59% 100%, 54% 99%, 49% 100%, 44% 98%, 39% 100%, 34% 98%, 29% 100%, 25% 98%, 20% 100%, 15% 98%, 10% 100%, 5% 98%, 0% 100%, 1% 94%, 0% 88%, 2% 82%, 0% 76%, 1% 70%, 0% 64%, 2% 58%, 0% 52%, 1% 46%, 0% 40%, 2% 34%, 0% 28%, 1% 22%, 0% 16%, 2% 10%, 0% 4%)"
@@ -39,46 +36,98 @@ export const TornPaper = ({ children, className }) => (
     </div>
 );
 
-// --- UPDATED STORM COMPONENT (With 3D Depth) ---
-export const StormOverlay = () => (
-    <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden animate-rumble">
+// --- CANVAS STORM SYSTEM (The 3D Way) ---
+export const StormOverlay = () => {
+    const canvasRef = useRef(null);
 
-        {/* Atmosphere: Dark Blue Tint */}
-        <div className="absolute inset-0 bg-[#12141d] opacity-40 mix-blend-multiply"></div>
+    useEffect(() => {
+        const canvas = canvasRef.current;
+        const ctx = canvas.getContext('2d');
+        let width = canvas.width = window.innerWidth;
+        let height = canvas.height = window.innerHeight;
+        let animationFrameId;
 
-        {/* LAYER 1: Background Rain (Slow, Small, Dim) */}
-        {/* Adds depth by looking "far away" */}
-        <div className="absolute inset-0 opacity-20 animate-rain"
-            style={{
-                backgroundImage: `linear-gradient(to bottom, transparent 90%, #64748b 100%)`,
-                backgroundSize: '1px 40px', // Very thin, short drops
-                animationDuration: '2s'     // Moves slower
-            }}>
-        </div>
+        // Configuration
+        const rainCount = 400; // Number of drops
+        const rainDrops = [];
+        let lightningTimer = 0;
+        let lightningOpacity = 0;
 
-        {/* LAYER 2: Midground Rain (Medium speed, Normal visibility) */}
-        <div className="absolute inset-0 opacity-30 animate-rain"
-            style={{
-                backgroundImage: `linear-gradient(to bottom, transparent 95%, #94a3b8 100%)`,
-                backgroundSize: '2px 100px',
-                animationDuration: '1.2s'
-            }}>
-        </div>
+        // Initialize Drops with 3D properties (z-index)
+        for (let i = 0; i < rainCount; i++) {
+            rainDrops.push({
+                x: Math.random() * width,
+                y: Math.random() * height,
+                z: Math.random() * 1.5 + 0.5, // Depth factor (0.5 to 2)
+                len: Math.random() * 20 + 10,
+                speed: 0 // Will be calculated based on z
+            });
+        }
 
-        {/* LAYER 3: Foreground Rain (Fast, Bright, "In your face") */}
-        {/* This creates the feeling of being IN the storm */}
-        <div className="absolute inset-0 opacity-40 animate-rain"
-            style={{
-                backgroundImage: `linear-gradient(to bottom, transparent 96%, #cbd5e1 100%)`,
-                backgroundSize: '3px 150px', // Long, heavy streaks
-                animationDuration: '0.6s'    // Falls very fast
-            }}>
-        </div>
+        const resize = () => {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+        };
+        window.addEventListener('resize', resize);
 
-        {/* Lightning Layer */}
-        <div className="absolute inset-0 bg-white mix-blend-overlay animate-lightning opacity-30"></div>
+        // Animation Loop
+        const animate = () => {
+            ctx.clearRect(0, 0, width, height);
 
-        {/* Heavy Vignette for "Tunnel Vision" */}
-        <div className="absolute inset-0 bg-radial-gradient(circle, transparent 30%, black 100%) opacity-70 mix-blend-multiply"></div>
-    </div>
-);
+            // 1. Draw Lightning Flash (Background Illumination)
+            if (lightningOpacity > 0) {
+                ctx.fillStyle = `rgba(255, 255, 255, ${lightningOpacity})`;
+                ctx.fillRect(0, 0, width, height);
+                lightningOpacity -= 0.05; // Fade out speed
+            }
+
+            // Randomly trigger lightning
+            if (Math.random() > 0.995 && lightningOpacity <= 0) {
+                lightningOpacity = Math.random() * 0.3 + 0.1; // Flash intensity
+            }
+
+            // 2. Draw Rain Drops
+            ctx.strokeStyle = 'rgba(174, 188, 208, 0.5)'; // Rain color
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+
+            rainDrops.forEach(drop => {
+                // Physics based on Depth (z)
+                // Closer drops (higher z) are faster, longer, and thicker
+                const speed = drop.z * 15;
+                const length = drop.z * 20;
+
+                // Draw drop
+                ctx.moveTo(drop.x, drop.y);
+                ctx.lineTo(drop.x, drop.y + length);
+
+                // Update position
+                drop.y += speed;
+
+                // Reset when off screen
+                if (drop.y > height) {
+                    drop.y = -length;
+                    drop.x = Math.random() * width;
+                }
+            });
+
+            ctx.stroke();
+            animationFrameId = requestAnimationFrame(animate);
+        };
+
+        animate();
+
+        return () => {
+            window.removeEventListener('resize', resize);
+            cancelAnimationFrame(animationFrameId);
+        };
+    }, []);
+
+    return (
+        <canvas
+            ref={canvasRef}
+            className="fixed inset-0 z-0 pointer-events-none mix-blend-overlay"
+            style={{ opacity: 0.8 }}
+        />
+    );
+};

@@ -33,18 +33,17 @@ const ArticleView = ({ article, onClose }) => {
                 {/* --- FRONT FACE --- */}
                 <div className="absolute inset-0 backface-hidden bg-transparent text-[#e8e6e1] flex flex-col items-center justify-center p-6 overflow-y-auto">
 
-                    {/* Only show InkBlot if NOT in storm mode (Storm is too busy for ink) */}
-                    {!isStormTheme && (
-                        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                            <InkBlot className="absolute top-[-10%] left-[-10%] w-[800px] h-[800px] text-black opacity-40 animate-pulse-slow" />
+                    {/* 3. BACKGROUND ELEMENTS (React to storm) */}
+                    {/* If storm is active, we SHOW the ink blot but shake it violently */}
+                    <div className={`absolute inset-0 overflow-hidden pointer-events-none ${isStormTheme ? 'shake-bg opacity-30' : ''}`}>
+                        <InkBlot className="absolute top-[-10%] left-[-10%] w-[800px] h-[800px] text-black opacity-40 animate-pulse-slow" />
+                        {!isStormTheme && (
                             <div className="absolute bottom-0 right-0 w-full h-1/2 bg-gradient-to-t from-[#8b3a3a]/10 to-transparent"></div>
-                        </div>
-                    )}
+                        )}
+                    </div>
 
-                    {/* CHANGE: 
-                        1. Removed 'animate-sway'
-                        2. Added conditional 'stone-text' class
-                    */}
+                    {/* 4. TEXT CONTENT (Statued / Fixed) */}
+                    {/* Removed 'animate-sway', added 'stone-text' */}
                     <div className={`max-w-5xl mx-auto relative z-10 text-center md:text-left space-y-12 my-20 ${isStormTheme ? 'stone-text' : ''}`}>
 
                         {/* Title Section */}
