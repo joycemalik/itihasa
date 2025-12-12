@@ -35,7 +35,7 @@ const ArticleView = ({ article, onClose }) => {
 
                     {/* 3. BACKGROUND ELEMENTS (React to storm) */}
                     {/* If storm is active, we SHOW the ink blot but shake it violently */}
-                    <div className={`absolute inset-0 overflow-hidden pointer-events-none ${isStormTheme ? 'shake-bg opacity-30' : ''}`}>
+                    <div className={`absolute inset-0 overflow-hidden pointer-events-none ${isStormTheme ? 'opacity-30' : ''}`}>
                         <InkBlot className="absolute top-[-10%] left-[-10%] w-[800px] h-[800px] text-black opacity-40 animate-pulse-slow" />
                         {!isStormTheme && (
                             <div className="absolute bottom-0 right-0 w-full h-1/2 bg-gradient-to-t from-[#8b3a3a]/10 to-transparent"></div>
