@@ -22,3 +22,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Source 3D models for scripts/bake-points.mjs (too large for git)
+models_src/

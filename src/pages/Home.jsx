@@ -137,7 +137,7 @@ const Home = () => {
                 {/* Latest Chronicle */}
                 <section id="latest-chronicle" className="py-20 mb-32">
                     <div className="text-center mb-12">
-                        <h3 className="font-hand text-2xl text-[#8b3a3a] mb-2 tracking-widest">LATEST CHRONICLE</h3>
+                        <h3 className="font-hand text-2xl text-[#8b3a3a] mb-2 tracking-widest">CHRONICLE I</h3>
                     </div>
 
                     <div className="max-w-4xl mx-auto relative group cursor-pointer" onClick={() => {
@@ -169,6 +169,50 @@ const Home = () => {
                             <div className="px-8 py-3 bg-[#1a1510] text-[#e8e6e1] font-ancient text-sm tracking-[0.2em] hover:bg-[#8b3a3a] transition-colors">
                                 [ READ THE FULL CHRONICLE ]
                             </div>
+                        </div>
+                    </div>
+                </section>
+
+                {/* Chronicle II: the film */}
+                <section id="the-film" className="pb-20 mb-32">
+                    <div className="text-center mb-12">
+                        <h3 className="font-hand text-2xl text-[#8b3a3a] mb-2 tracking-widest">CHRONICLE II &middot; THE FILM</h3>
+                    </div>
+
+                    <div className="max-w-4xl mx-auto relative group cursor-pointer" onClick={() => {
+                        // Wake the score inside this click so it can play; the film itself loads lazily.
+                        import('../film/audio').then(({ score }) => score.unlock());
+                        navigate('/film');
+                    }}>
+                        <div className="absolute inset-0 bg-[#1a1510] transform -rotate-1 rounded-sm shadow-xl transition-transform duration-500 group-hover:rotate-0"></div>
+                        <div className="relative bg-[#0c0a08] p-12 md:p-16 border border-[#2c241b] shadow-2xl flex flex-col items-center text-center overflow-hidden transition-transform duration-500 group-hover:-translate-y-2">
+                            <div className="absolute inset-0 opacity-30 pointer-events-none" style={{ background: 'radial-gradient(circle at 50% 35%, rgba(239,233,220,0.18), transparent 60%)' }}></div>
+                            <div className="absolute top-0 left-0 w-full h-1 bg-[#e8e6e1] opacity-30"></div>
+
+                            <div className="relative mb-8 flex flex-col items-center">
+                                <div className="w-px h-12 bg-[#e8e6e1]/50"></div>
+                                <div className="w-6 h-4 bg-[#e8e6e1]/80" style={{ clipPath: 'polygon(50% 0, 100% 100%, 0 100%)' }}></div>
+                                <div className="w-3 h-3 -mt-1 rounded-full bg-[#fff3d6] shadow-[0_0_24px_rgba(255,243,214,0.8)] group-hover:shadow-[0_0_40px_rgba(255,243,214,1)] transition-shadow duration-700"></div>
+                            </div>
+
+                            <h2 className="relative font-ancient text-4xl md:text-6xl text-[#e8e6e1] mb-6">WHO IS LOOKING?</h2>
+
+                            <p className="relative font-scholar italic text-xl md:text-2xl text-[#b8ad9e] mb-8">
+                                "I am trying to sleep but I cannot stop waking up."
+                            </p>
+
+                            <div className="relative font-scholar text-lg md:text-xl text-[#8a8073] max-w-2xl leading-relaxed mb-10">
+                                <p>
+                                    A short film drawn in sixty-five thousand particles. A hand, a skull full of voices,
+                                    an onion with no center, an empty car still driving. Pull the light, then scroll,
+                                    and follow the question down to where it ends.
+                                </p>
+                            </div>
+
+                            <div className="relative px-8 py-3 border border-[#e8e6e1]/40 text-[#e8e6e1] font-ancient text-sm tracking-[0.2em] group-hover:bg-[#e8e6e1] group-hover:text-[#0c0a08] transition-colors">
+                                [ ENTER THE FILM ]
+                            </div>
+                            <p className="relative mt-6 font-hand text-lg text-[#8a8073]">sound on &middot; best with headphones</p>
                         </div>
                     </div>
                 </section>
