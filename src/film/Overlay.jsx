@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { scenes, FILM_TITLE } from './timeline';
 import { runtime, useExperience } from './runtime';
 import { score } from './audio';
-import { leaveMark } from '../lib/supabase';
+import Opener from './Opener';
 
 const ROMAN = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII', 'XIII', 'XIV'];
 const clamp01 = (x) => Math.min(1, Math.max(0, x));
@@ -19,24 +19,19 @@ export default function Overlay() {
     const [line, setLine] = useState({ key: null, text: '', scene: 0 });
     const [chapter, setChapter] = useState(-1);
     const [muted, setMuted] = useState(false);
-    const navigate = useNavigate();
-    const [answer, setAnswer] = useState('');
-    const [marking, setMarking] = useState(false);
-    const [markError, setMarkError] = useState('');
-
-    // The keepsake: answer the film's question, become a star in the shared sky.
-    const submitMark = async (e) => {
-        e.preventDefault();
-        setMarking(true);
-        setMarkError('');
+    const [opened, setOpened] = useState(false);
+    const [myMark, setMyMark] = useState(() => {
         try {
-            const mark = await leaveMark(answer.trim());
-            navigate(`/sky/${mark.number}`);
-        } catch (err) {
-            setMarkError(err.message);
-            setMarking(false);
+            return localStorage.getItem('itihasa-mark');
+        } catch {
+            return null;
         }
+    });
+    const onOpenerDone = (mark, late) => {
+        if (mark) setMyMark(String(mark));
+        if (!late) setOpened(true);
     };
+    const navigate = useNavigate();
     const lineRef = useRef(null);
     const scrimRef = useRef(null);
     const charsRef = useRef([]);
@@ -124,8 +119,6 @@ export default function Overlay() {
                 // Hidden (not just transparent) until it shows, so the return button can't be hit blind.
                 endRef.current.style.visibility = credit > 0.02 ? 'visible' : 'hidden';
             }
-            // The last caption gives way to the question.
-            if (el && credit > 0) el.style.opacity = vis * (1 - credit);
         };
         raf = requestAnimationFrame(tick);
         return () => {
@@ -173,23 +166,12 @@ export default function Overlay() {
             )}
             <div ref={endRef} className="exp-end">
                 <div className="exp-end-title">{FILM_TITLE}</div>
-                <div className="exp-end-bottom">
-                <form className="exp-mark" onSubmit={submitMark}>
-                    <label htmlFor="exp-answer">Who is looking?</label>
-                    <input
-                        id="exp-answer"
-                        value={answer}
-                        onChange={(e) => setAnswer(e.target.value)}
-                        maxLength={120}
-                        required
-                        autoComplete="off"
-                        placeholder="answer in one line"
-                    />
-                    <button type="submit" disabled={marking}>{marking ? 'placing your star…' : 'leave your mark'}</button>
-                    {markError && <p>{markError}</p>}
-                </form>
-                <button className="exp-return" onClick={() => navigate('/sky')}>see the sky of observers</button>
-                </div>
+                <button className="exp-return" onClick={() => navigate('/')}>return</button>
+                {myMark && (
+                    <button className="exp-mystar" onClick={() => navigate(`/sky/${myMark}`)}>
+                        your star · No. {myMark.padStart(4, '0')}
+                    </button>
+                )}
             </div>
 
             {phase !== 'loading' && (
@@ -214,7 +196,8 @@ export default function Overlay() {
                 </button>
             )}
 
-            {phase === 'intro' && <div className="exp-hint">pull the light down</div>}
+            {phase === 'intro' && opened && <div className="exp-hint">pull the light down</div>}
+            {phase === 'intro' && !opened && <Opener onDone={onOpenerDone} />}
 
             {phase === 'loading' && (
                 <div className="exp-loader">
