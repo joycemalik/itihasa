@@ -4,6 +4,7 @@ import { scenes, FILM_TITLE } from './timeline';
 import { runtime, useExperience } from './runtime';
 import { score } from './audio';
 import Opener from './Opener';
+import { getMark } from '../lib/supabase';
 
 const ROMAN = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII', 'XIII', 'XIV'];
 const clamp01 = (x) => Math.min(1, Math.max(0, x));
@@ -27,6 +28,19 @@ export default function Overlay() {
             return null;
         }
     });
+    // A remembered star may have been removed by moderation: forget it if so.
+    useEffect(() => {
+        if (!myMark) return;
+        getMark(myMark).then((m) => {
+            if (m) return;
+            setMyMark(null);
+            try {
+                localStorage.removeItem('itihasa-mark');
+            } catch {
+                // private mode
+            }
+        }).catch(() => {});
+    }, [myMark]);
     const onOpenerDone = (mark, late) => {
         if (mark) setMyMark(String(mark));
         if (!late) setOpened(true);
