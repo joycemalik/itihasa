@@ -293,16 +293,9 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: space-between;
-  padding: calc(max(7vh, (100vh - 100vw / 2.39) / 2) + 7vh) 16px calc(max(7vh, (100vh - 100vw / 2.39) / 2) + 4vh);
+  justify-content: center;
+  gap: 3.5rem;
   opacity: 0;
-}
-
-.exp-end-bottom {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 22px;
 }
 
 .exp-end-title {
@@ -312,6 +305,7 @@
   letter-spacing: 1.2em;
   padding-left: 1.2em;
   color: rgba(239, 233, 220, 0.8);
+  transform: translateY(-17vh);
 }
 
 .exp-return,
@@ -329,7 +323,9 @@
 }
 
 .exp-return {
-  padding: 8px 0 8px 0.4em;
+  position: absolute;
+  bottom: max(9vh, calc((100vh - 100vw / 2.39) / 2 + 3vh));
+  padding: 10px 0 10px 0.4em;
   border-bottom: 1px solid rgba(239, 233, 220, 0.25);
 }
 
@@ -492,63 +488,116 @@
 }
 
 
-/* The keepsake prompt at the end of the film. */
-.exp-mark {
+/* Quiet link to the visitor's star, beneath the closing credit. */
+.exp-mystar {
+  position: absolute;
+  top: calc(50% - 17vh + 3.2rem);
+  background: none;
+  border: 0;
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-style: italic;
+  font-size: 1rem;
+  letter-spacing: 0.08em;
+  color: rgba(239, 233, 220, 0.45);
+  cursor: pointer;
+  pointer-events: auto;
+  transition: color 0.4s ease;
+}
+
+.exp-mystar:hover {
+  color: rgba(239, 233, 220, 0.9);
+}
+
+/* The opener: one question in the dark, before the lamp. */
+.exp-opener {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #050505;
+  pointer-events: auto;
+  transition: opacity 1.4s ease;
+}
+
+.exp-opener.is-leaving {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.exp-opener form {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 18px;
-  pointer-events: auto;
+  gap: 22px;
+  padding: 0 16px;
+  animation: exp-fade-in 2.4s ease both;
 }
 
-.exp-mark label {
+.exp-opener-kicker {
+  margin: 0;
+  font-family: 'Outfit', sans-serif;
+  font-weight: 300;
+  font-size: 10px;
+  letter-spacing: 0.5em;
+  text-transform: uppercase;
+  color: rgba(239, 233, 220, 0.4);
+}
+
+.exp-opener label {
   font-family: 'Cormorant Garamond', Georgia, serif;
   font-style: italic;
-  font-size: clamp(1.4rem, 2.4vw, 2rem);
-  color: rgba(239, 233, 220, 0.85);
+  font-weight: 300;
+  font-size: clamp(2.6rem, 6vw, 4.6rem);
+  color: #efe9dc;
 }
 
-.exp-mark input {
-  width: min(520px, 80vw);
-  padding: 8px 4px;
+.exp-opener input {
+  width: min(520px, 84vw);
+  padding: 10px 4px;
   background: transparent;
   border: 0;
-  border-bottom: 1px solid rgba(239, 233, 220, 0.35);
+  border-bottom: 1px solid rgba(239, 233, 220, 0.3);
   font-family: 'Cormorant Garamond', Georgia, serif;
   font-style: italic;
-  font-size: 1.35rem;
+  font-size: 1.4rem;
   text-align: center;
   color: #efe9dc;
   outline: none;
 }
 
-.exp-mark input:focus {
-  border-bottom-color: rgba(239, 233, 220, 0.8);
+.exp-opener input:focus {
+  border-bottom-color: rgba(239, 233, 220, 0.75);
 }
 
-.exp-mark input::placeholder {
-  color: rgba(239, 233, 220, 0.3);
+.exp-opener input::placeholder {
+  color: rgba(239, 233, 220, 0.28);
 }
 
-.exp-mark button {
+.exp-opener button {
   background: none;
   border: 1px solid rgba(239, 233, 220, 0.35);
-  padding: 10px 22px;
+  padding: 10px 26px;
   font-family: 'Outfit', sans-serif;
   font-size: 10px;
-  letter-spacing: 0.4em;
+  letter-spacing: 0.45em;
   text-transform: uppercase;
-  color: rgba(239, 233, 220, 0.8);
+  color: rgba(239, 233, 220, 0.85);
   cursor: pointer;
+  transition: opacity 0.6s ease, background 0.3s ease;
 }
 
-.exp-mark button:hover {
+.exp-opener button:disabled {
+  opacity: 0.25;
+  cursor: default;
+}
+
+.exp-opener button:not(:disabled):hover {
   background: rgba(239, 233, 220, 0.1);
 }
 
-.exp-mark p {
-  margin: 0;
-  font-family: 'Inter', sans-serif;
-  font-size: 13px;
-  color: #d98a7a;
+.exp-opener .exp-opener-skip {
+  border: 0;
+  padding: 4px;
+  color: rgba(239, 233, 220, 0.3);
 }
