@@ -4,6 +4,7 @@ import ReactMarkdown from 'react-markdown';
 import { toneManager } from './ToneManager';
 import { bharatChronicle } from '../../data/bharatChronicle';
 import { useScene } from '../../context/SceneContext';
+import Comments from '../Comments';
 
 const ChronicleView = ({ onClose }) => {
     const [activeEffect, setActiveEffect] = useState('intro');
@@ -154,6 +155,8 @@ const ChronicleView = ({ onClose }) => {
                             </div>
                         );
                     })}
+
+                    <Comments chronicle="bharat" />
 
                     {/* Footer / Subscribe */}
                     <div className="min-h-[50vh] flex flex-col items-center justify-center pb-32">

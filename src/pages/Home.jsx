@@ -213,6 +213,12 @@ const Home = () => {
                                 [ ENTER THE FILM ]
                             </div>
                             <p className="relative mt-6 font-hand text-lg text-[#8a8073]">sound on &middot; best with headphones</p>
+                            <button
+                                onClick={(e) => { e.stopPropagation(); navigate('/sky'); }}
+                                className="relative mt-4 font-scholar italic text-lg text-[#b8ad9e] underline decoration-[#e8e6e1]/30 underline-offset-4 hover:text-[#e8e6e1] cursor-pointer"
+                            >
+                                see the sky of everyone who answered &rarr;
+                            </button>
                         </div>
                     </div>
                 </section>
