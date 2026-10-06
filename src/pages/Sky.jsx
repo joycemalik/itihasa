@@ -81,7 +81,7 @@ function drawCard(ctx, mark, strokes, t) {
     ctx.fillStyle = 'rgba(239,233,220,0.55)';
     ctx.font = '300 26px Outfit, sans-serif';
     ctx.letterSpacing = '12px';
-    ctx.fillText('WHO IS LOOKING?', W / 2, 150);
+    ctx.fillText('WHO ARE YOU?', W / 2, 150);
     ctx.letterSpacing = '0px';
 
     // The hanging lamp, lit.
@@ -173,10 +173,10 @@ function Keepsake({ mark }) {
     };
 
     const share = async () => {
-        const text = `I am Observer No. ${mark.number}. Who is looking?`;
+        const text = `Before the light went out, they asked me who I am. I'm Observer No. ${mark.number}.`;
         if (navigator.share) {
             try {
-                await navigator.share({ title: 'Who is looking?', text, url });
+                await navigator.share({ title: 'Who are you?', text, url });
             } catch {
                 // dismissed
             }
@@ -322,7 +322,7 @@ const Sky = () => {
                 <div className="pointer-events-auto flex flex-col items-center text-center">
                     <h1 className="font-ancient text-4xl md:text-6xl mb-4">THE SKY OF OBSERVERS</h1>
                     <p className="font-scholar italic text-xl text-[#e8e6e1]/60 max-w-xl mb-3">
-                        Everyone who reaches the end of the film is asked one question. Each answer is a star.
+                        Before the light goes out, everyone who enters the film is asked one question: who are you? Each answer is a star.
                     </p>
                     <p className="font-hand text-2xl text-[#e8e6e1]/50 mb-16">
                         {marks.length ? `${marks.length} ${marks.length === 1 ? 'observer has' : 'observers have'} answered` : 'The sky is waiting for its first star'}
