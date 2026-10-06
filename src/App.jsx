@@ -1,4 +1,4 @@
-import React, { Suspense, lazy } from 'react';
+import React, { Suspense, lazy, useEffect } from 'react';
 import { Routes, Route, useLocation, useNavigate } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
 import Home from './pages/Home';
@@ -10,9 +10,22 @@ import BackgroundLayer from './components/BackgroundLayer';
 // Part II: the film. Loaded on demand so three.js stays out of the rest of the site.
 const Film = lazy(() => import('./film/Experience'));
 
+// Per-page titles for search results and browser tabs.
+const TITLES = {
+  '/': 'Itihasa · Ancient Narratives & Textual Worlds',
+  '/chronicle/bharat': 'The Origins of Bharat · Itihasa',
+  '/film': 'Who Is Looking? A film in particles · Itihasa',
+  '/sky': 'The Sky of Observers · Itihasa',
+};
+
 const App = () => {
   const location = useLocation();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const path = location.pathname;
+    document.title = TITLES[path] || (path.startsWith('/sky/') ? `Observer No. ${path.split('/')[2]} · Itihasa` : TITLES['/']);
+  }, [location.pathname]);
 
   return (
     <>
