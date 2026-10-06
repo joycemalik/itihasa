@@ -4,6 +4,7 @@ import { AnimatePresence } from 'framer-motion';
 import Home from './pages/Home';
 import Chronicle from './pages/Chronicle';
 import NotFound from './components/NotFound';
+import Sky from './pages/Sky';
 import BackgroundLayer from './components/BackgroundLayer';
 
 // Part II: the film. Loaded on demand so three.js stays out of the rest of the site.
@@ -20,6 +21,8 @@ const App = () => {
         <Routes location={location} key={location.pathname}>
           <Route path="/" element={<Home />} />
           <Route path="/chronicle/:id" element={<Chronicle />} />
+          <Route path="/sky" element={<Sky />} />
+          <Route path="/sky/:number" element={<Sky />} />
           <Route path="/film" element={<Suspense fallback={<div className="fixed inset-0 bg-black" />}><Film /></Suspense>} />
           <Route path="*" element={<NotFound onReset={() => navigate('/')} />} />
         </Routes>
