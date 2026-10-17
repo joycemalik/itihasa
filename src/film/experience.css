@@ -489,9 +489,119 @@
 
 
 /* Quiet link to the visitor's star, beneath the closing credit. */
-.exp-mystar {
+.exp-endsky {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.exp-end-title,
+.exp-end-links,
+.exp-return {
+  z-index: 1;
+}
+
+.exp-end-links {
   position: absolute;
   top: calc(50% - 17vh + 3.2rem);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.4rem;
+}
+
+.exp-end-row {
+  display: flex;
+  align-items: center;
+  gap: 1.2rem;
+}
+
+.exp-end-row i {
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: rgba(239, 233, 220, 0.35);
+}
+
+.exp-endlink {
+  background: none;
+  border: 0;
+  padding: 6px 0;
+  font-family: 'Outfit', sans-serif;
+  font-size: 10px;
+  letter-spacing: 0.35em;
+  text-transform: uppercase;
+  color: rgba(239, 233, 220, 0.5);
+  cursor: pointer;
+  pointer-events: auto;
+  transition: color 0.4s ease;
+}
+
+.exp-endlink:hover {
+  color: rgba(239, 233, 220, 0.95);
+}
+
+/* Auto scroll: mirrors the sound toggle on the other side of the frame. */
+.exp-auto {
+  position: absolute;
+  left: clamp(16px, 4vw, 56px);
+  bottom: max(2.2vh, calc((100vh - 100vw / 2.39) / 4 - 10px));
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 0;
+  font-family: 'Outfit', sans-serif;
+  font-size: 10px;
+  letter-spacing: 0.35em;
+  text-transform: uppercase;
+  color: rgba(239, 233, 220, 0.55);
+  cursor: pointer;
+  pointer-events: auto;
+  user-select: none;
+  transition: color 0.4s ease;
+  animation: exp-fade-in 2s ease 1.5s both;
+}
+
+.exp-auto:hover,
+.exp-auto.is-on {
+  color: rgba(239, 233, 220, 0.9);
+}
+
+.exp-auto input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.exp-auto-box {
+  position: relative;
+  width: 10px;
+  height: 10px;
+  border: 1px solid currentColor;
+  transition: border-color 0.4s ease;
+}
+
+.exp-auto-box::after {
+  content: '';
+  position: absolute;
+  inset: 2px;
+  background: currentColor;
+  transform: scale(0);
+  transition: transform 0.35s ease;
+}
+
+.exp-auto.is-on .exp-auto-box::after {
+  transform: scale(1);
+  animation: exp-breathe 3.2s ease-in-out infinite;
+}
+
+.exp-auto input:focus-visible + .exp-auto-box {
+  outline: 1px solid currentColor;
+  outline-offset: 3px;
+}
+
+.exp-mystar {
   background: none;
   border: 0;
   font-family: 'Cormorant Garamond', Georgia, serif;

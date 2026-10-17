@@ -1,10 +1,10 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { getMarks, getMark } from '../lib/supabase';
 import Comments from '../components/Comments';
-
-const SITE = 'https://itihasaa.netlify.app';
+import SkyScene from '../sky/SkyScene';
+import { SITE, shareStar } from '../lib/share';
 // Rig Veda 10.129.7, the last verse of the Nasadiya Sukta (Griffith, 1896).
 const VERSE = [
     'He, the first origin of this creation, whether he formed it all or did not form it,',
@@ -145,7 +145,6 @@ function Keepsake({ mark }) {
     const canvasRef = useRef(null);
     const strokes = useMemo(() => answerStrokes(mark.answer, mark.seed, 1080, 340, 600), [mark]);
     const [copied, setCopied] = useState(false);
-    const url = `${SITE}/sky/${mark.number}`;
 
     useEffect(() => {
         let raf;
@@ -173,16 +172,7 @@ function Keepsake({ mark }) {
     };
 
     const share = async () => {
-        const text = `Before the light went out, they asked me who I am. I'm Observer No. ${mark.number}.`;
-        if (navigator.share) {
-            try {
-                await navigator.share({ title: 'Who are you?', text, url });
-            } catch {
-                // dismissed
-            }
-            return;
-        }
-        await navigator.clipboard.writeText(`${text} ${url}`);
+        if ((await shareStar(mark.number)) !== 'copied') return;
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
     };
@@ -202,87 +192,13 @@ function Keepsake({ mark }) {
     );
 }
 
-// The shared sky: every answer ever given, as a star.
-function SkyCanvas({ marks, focus, onHover }) {
-    const ref = useRef(null);
-    useEffect(() => {
-        const canvas = ref.current;
-        const ctx = canvas.getContext('2d');
-        let raf;
-        let w = 0, h = 0;
-        const resize = () => {
-            const dpr = Math.min(window.devicePixelRatio, 2);
-            w = canvas.width = window.innerWidth * dpr;
-            h = canvas.height = window.innerHeight * dpr;
-        };
-        resize();
-        window.addEventListener('resize', resize);
-        // Faint constellation lines: each star reaches for the nearest earlier stars.
-        const links = [];
-        marks.forEach((m, i) => {
-            const near = marks.slice(Math.max(0, i - 60), i)
-                .map((o) => ({ o, d: (o.x - m.x) ** 2 + (o.y - m.y) ** 2 }))
-                .sort((a, b) => a.d - b.d)
-                .slice(0, 2);
-            near.forEach(({ o }) => links.push([m, o]));
-        });
-        const move = (e) => {
-            const mx = e.clientX / window.innerWidth, my = e.clientY / window.innerHeight;
-            let best = null, bd = 0.0009;
-            for (const m of marks) {
-                const d = (m.x - mx) ** 2 + (m.y - my) ** 2;
-                if (d < bd) { bd = d; best = m; }
-            }
-            onHover(best ? { mark: best, x: e.clientX, y: e.clientY } : null);
-        };
-        window.addEventListener('pointermove', move);
-        const tick = (now) => {
-            const t = now / 1000;
-            ctx.fillStyle = '#05060a';
-            ctx.fillRect(0, 0, w, h);
-            ctx.strokeStyle = 'rgba(239,233,220,0.06)';
-            ctx.lineWidth = 1;
-            for (const [a, b] of links) {
-                ctx.beginPath();
-                ctx.moveTo(a.x * w, a.y * h);
-                ctx.lineTo(b.x * w, b.y * h);
-                ctx.stroke();
-            }
-            for (const m of marks) {
-                const tw = 0.55 + 0.45 * Math.sin(t * (0.6 + (m.seed % 100) / 80) + m.seed);
-                const isFocus = focus && m.number === focus.number;
-                const r = (isFocus ? 3.2 : 1.2 + (m.seed % 7) / 6) * (w / window.innerWidth);
-                ctx.globalAlpha = isFocus ? 1 : 0.35 + 0.65 * tw;
-                ctx.fillStyle = '#efe9dc';
-                ctx.beginPath();
-                ctx.arc(m.x * w, m.y * h, r, 0, Math.PI * 2);
-                ctx.fill();
-                if (isFocus) {
-                    const ring = (t % 2.4) / 2.4;
-                    ctx.globalAlpha = 1 - ring;
-                    ctx.strokeStyle = '#fff3d6';
-                    ctx.beginPath();
-                    ctx.arc(m.x * w, m.y * h, r + ring * 40 * (w / window.innerWidth), 0, Math.PI * 2);
-                    ctx.stroke();
-                    ctx.strokeStyle = 'rgba(239,233,220,0.06)';
-                }
-            }
-            ctx.globalAlpha = 1;
-            raf = requestAnimationFrame(tick);
-        };
-        raf = requestAnimationFrame(tick);
-        return () => {
-            cancelAnimationFrame(raf);
-            window.removeEventListener('resize', resize);
-            window.removeEventListener('pointermove', move);
-        };
-    }, [marks, focus, onHover]);
-    return <canvas ref={ref} className="fixed inset-0 w-full h-full z-0" />;
-}
-
 const Sky = () => {
     const { number } = useParams();
     const navigate = useNavigate();
+    const surfaceRef = useRef(null);
+    const tipRef = useRef(null);
+    const zoomRef = useRef(null);
+    const apiRef = useRef(null);
     const [marks, setMarks] = useState([]);
     const [focus, setFocus] = useState(null);
     const [hover, setHover] = useState(null);
@@ -290,12 +206,17 @@ const Sky = () => {
 
     useEffect(() => {
         window.scrollTo(0, 0);
-        getMarks().then(setMarks).catch(() => setMarks([]));
+        // The answers are written in Cormorant: wait for it, or they'd be spelt in Georgia.
+        const font = document.fonts?.load('italic 300 76px "Cormorant Garamond"').catch(() => {}) ?? Promise.resolve();
+        Promise.all([getMarks(), font]).then(([m]) => setMarks(m)).catch(() => setMarks([]));
     }, []);
     useEffect(() => {
-        if (!number) return;
+        setMissing(false);
+        if (!number) return setFocus(null);
         getMark(number).then((m) => (m ? setFocus(m) : setMissing(true))).catch(() => setMissing(true));
     }, [number]);
+
+    const pick = useCallback((m) => navigate(`/sky/${m.number}`), [navigate]);
 
     const watch = () => {
         import('../film/audio').then(({ score }) => score.unlock());
@@ -303,42 +224,109 @@ const Sky = () => {
     };
 
     return (
-        <motion.div className="relative min-h-screen text-[#e8e6e1]" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 1 }}>
-            <SkyCanvas marks={marks} focus={focus} onHover={setHover} />
-            {hover && (
-                <div className="fixed z-20 pointer-events-none max-w-xs px-4 py-3 bg-[#0c0a08]/90 border border-[#e8e6e1]/15 font-scholar italic text-lg" style={{ left: hover.x + 16, top: hover.y + 16 }}>
-                    “{hover.mark.answer}”
-                    <div className="not-italic font-hand text-base text-[#e8e6e1]/50 mt-1">Observer No. {pad(hover.mark.number)}</div>
-                </div>
-            )}
+        <motion.div className="relative min-h-screen bg-[#020306] text-[#e8e6e1]" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 1.4 }}>
+            <SkyScene marks={marks} focus={focus} surfaceRef={surfaceRef} tipRef={tipRef} zoomRef={zoomRef} apiRef={apiRef} onHover={setHover} onPick={pick} />
 
-            <nav className="fixed top-0 left-0 w-full z-30 p-8 flex justify-between pointer-events-none">
-                <button onClick={() => navigate('/')} className="pointer-events-auto font-ancient text-xs tracking-[0.3em] text-[#e8e6e1]/60 hover:text-[#e8e6e1] cursor-pointer">
-                    ← ITIHASA
-                </button>
-            </nav>
+            <div ref={tipRef} className="fixed top-0 left-0 z-40 pointer-events-none" style={{ opacity: hover ? 1 : 0, transition: 'opacity 0.3s' }}>
+                {hover && (
+                    <div className="max-w-xs px-4 py-3 bg-[#020306]/80 backdrop-blur-sm border border-[#e8e6e1]/15">
+                        <div className="font-scholar italic text-lg leading-snug">“{hover.answer}”</div>
+                        <div className="font-ancient text-[10px] tracking-[0.3em] text-[#e8e6e1]/50 mt-2">OBSERVER No. {pad(hover.number)}</div>
+                    </div>
+                )}
+            </div>
 
-            <main className="relative z-10 flex flex-col items-center px-6 pt-32 pb-16 pointer-events-none">
-                <div className="pointer-events-auto flex flex-col items-center text-center">
-                    <h1 className="font-ancient text-4xl md:text-6xl mb-4">THE SKY OF OBSERVERS</h1>
-                    <p className="font-scholar italic text-xl text-[#e8e6e1]/60 max-w-xl mb-3">
-                        Before the light goes out, everyone who enters the film is asked one question: who are you? Each answer is a star.
+            <section ref={surfaceRef} className="relative z-10 h-[100svh] select-none cursor-grab active:cursor-grabbing" style={{ touchAction: 'none' }}>
+                <nav className="absolute top-0 left-0 w-full p-6 md:p-8 flex justify-between items-start">
+                    <button onClick={() => navigate('/')} className="font-ancient text-xs tracking-[0.3em] text-[#e8e6e1]/60 hover:text-[#e8e6e1] cursor-pointer">
+                        ← ITIHASA
+                    </button>
+                    <span className="font-ancient text-[10px] tracking-[0.3em] text-[#e8e6e1]/40 text-right">
+                        {marks.length ? `${marks.length} ${marks.length === 1 ? 'OBSERVER' : 'OBSERVERS'}` : ''}
+                    </span>
+                </nav>
+
+                <motion.div
+                    className="absolute top-[12vh] left-0 w-full flex flex-col items-center text-center px-6 pointer-events-none"
+                    initial={{ opacity: 0, y: 12, filter: 'blur(8px)' }}
+                    // Says its piece, then gives the sky back.
+                    animate={focus ? { opacity: 0 } : { opacity: [0, 1, 1, 0], y: 0, filter: ['blur(8px)', 'blur(0px)', 'blur(0px)', 'blur(6px)'] }}
+                    transition={focus ? { duration: 1 } : { duration: 11, times: [0, 0.2, 0.75, 1], delay: 0.6 }}
+                >
+                    <h1 className="font-ancient text-2xl md:text-4xl tracking-[0.35em] pl-[0.35em] mb-3">THE SKY OF OBSERVERS</h1>
+                    <p className="font-scholar italic text-lg md:text-xl text-[#e8e6e1]/60 max-w-xl">
+                        {marks.length
+                            ? 'Before the light goes out, everyone is asked who they are. Every answer stays up here.'
+                            : 'The sky is waiting for its first star.'}
                     </p>
-                    <p className="font-hand text-2xl text-[#e8e6e1]/50 mb-16">
-                        {marks.length ? `${marks.length} ${marks.length === 1 ? 'observer has' : 'observers have'} answered` : 'The sky is waiting for its first star'}
+                </motion.div>
+
+                {focus && (
+                    <motion.div
+                        key={focus.number}
+                        data-ui
+                        className="absolute left-6 md:left-12 bottom-[16vh] max-w-sm"
+                        initial={{ opacity: 0, x: -16 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ duration: 1.2, delay: 0.8 }}
+                    >
+                        <div className="font-ancient text-[10px] tracking-[0.35em] text-[#e8e6e1]/50 mb-3">OBSERVER No. {pad(focus.number)}</div>
+                        <div className="font-scholar italic text-3xl md:text-4xl leading-tight mb-6">“{focus.answer}”</div>
+                        <div className="flex gap-5 font-ancient text-[10px] tracking-[0.3em]">
+                            <button onClick={() => document.getElementById('keepsake')?.scrollIntoView({ behavior: 'smooth' })} className="text-[#e8e6e1]/70 hover:text-[#e8e6e1] border-b border-[#e8e6e1]/30 pb-1 cursor-pointer">
+                                KEEPSAKE ↓
+                            </button>
+                            <button onClick={() => navigate('/sky')} className="text-[#e8e6e1]/50 hover:text-[#e8e6e1] pb-1 cursor-pointer">
+                                SEE THEM ALL
+                            </button>
+                        </div>
+                    </motion.div>
+                )}
+                {missing && (
+                    <p className="absolute left-0 w-full bottom-[22vh] text-center font-scholar italic text-xl text-[#e8e6e1]/60">That star could not be found.</p>
+                )}
+
+                <div className="absolute bottom-0 left-0 w-full pb-[5vh] flex flex-col items-center gap-5 pointer-events-none">
+                    <p className="font-scholar italic text-sm md:text-base text-[#e8e6e1]/45 tracking-wide text-center px-6">
+                        scroll or pinch to zoom · drag to look around · touch a star to read it
                     </p>
-
-                    {focus && <Keepsake mark={focus} />}
-                    {missing && <p className="font-scholar italic text-xl text-[#e8e6e1]/60">That star could not be found.</p>}
-
-                    <button onClick={watch} className="mt-16 px-8 py-3 border border-[#e8e6e1]/40 font-ancient text-sm tracking-[0.2em] hover:bg-[#e8e6e1] hover:text-[#0c0a08] transition-colors cursor-pointer">
+                    <div className="flex flex-wrap justify-center gap-3">
+                        <button onClick={() => apiRef.current?.wander()} className="pointer-events-auto px-7 py-3 border border-[#e8e6e1]/20 bg-[#020306]/40 backdrop-blur-sm font-ancient text-xs tracking-[0.25em] text-[#e8e6e1]/80 hover:border-[#e8e6e1]/60 hover:text-[#e8e6e1] transition-colors cursor-pointer">
+                            [ SHOW ME SOMEONE ]
+                        </button>
+                        <button onClick={watch} className="pointer-events-auto px-7 py-3 border border-[#e8e6e1]/30 bg-[#020306]/40 backdrop-blur-sm font-ancient text-xs tracking-[0.25em] hover:bg-[#e8e6e1] hover:text-[#0c0a08] transition-colors cursor-pointer">
                         {focus ? '[ WATCH THE FILM ]' : '[ ENTER THE FILM TO ANSWER ]'}
+                        </button>
+                    </div>
+                    <button
+                        onClick={() => document.getElementById('below')?.scrollIntoView({ behavior: 'smooth' })}
+                        className="pointer-events-auto mt-1 font-ancient text-[10px] tracking-[0.3em] text-[#e8e6e1]/40 hover:text-[#e8e6e1] cursor-pointer"
+                    >
+                        WHAT THEY SAID ↓
                     </button>
                 </div>
-            </main>
 
-            <div className="relative z-10 bg-gradient-to-b from-transparent to-[#05060a]/95">
+                {/* The lens: how far in you are, with a way in and out. */}
+                <div data-ui className="absolute right-4 md:right-8 top-1/2 -translate-y-1/2 flex flex-col items-center gap-3 font-ancient text-[#e8e6e1]/60">
+                    <button onClick={() => apiRef.current?.zoom(0.7)} aria-label="Zoom in" className="w-8 h-8 border border-[#e8e6e1]/20 bg-[#020306]/40 backdrop-blur-sm hover:text-[#e8e6e1] hover:border-[#e8e6e1]/60 transition-colors cursor-pointer">+</button>
+                    <div className="relative w-px h-28 bg-[#e8e6e1]/15">
+                        <div ref={zoomRef} className="absolute inset-0 bg-[#e8e6e1]/70 origin-bottom" style={{ transform: 'scaleY(0)' }} />
+                    </div>
+                    <button onClick={() => apiRef.current?.zoom(1.4)} aria-label="Zoom out" className="w-8 h-8 border border-[#e8e6e1]/20 bg-[#020306]/40 backdrop-blur-sm hover:text-[#e8e6e1] hover:border-[#e8e6e1]/60 transition-colors cursor-pointer">−</button>
+                </div>
+            </section>
+
+            {/* Below the sky: a dark sheet the sky fades under, so the words stay readable. */}
+            <div id="below" className="relative z-10">
+                <div className="h-40 bg-gradient-to-b from-transparent to-[#020306]/95 pointer-events-none" />
+                <div className="bg-[#020306]/95 backdrop-blur-md pb-16">
+                {focus && (
+                    <section id="keepsake" className="flex flex-col items-center px-6 pt-24 pb-8">
+                        <Keepsake mark={focus} />
+                    </section>
+                )}
                 <Comments chronicle="film" title="WHAT THE OBSERVERS SAID" prompt="Speak about the film. Others will read it here." />
+                </div>
             </div>
         </motion.div>
     );

@@ -6,10 +6,12 @@ export const useExperience = create((set) => ({
     phase: 'loading', // loading -> intro (lamp on) -> story (lights out, scroll drives the film)
     loadProgress: 0,
     error: null,
+    autoScroll: false, // the film scrolls itself, slowly, until the viewer touches it
     setPhase: (phase) => set({ phase }),
     setLoadProgress: (loadProgress) => set({ loadProgress }),
     setError: (error) => set({ error }),
-    reset: () => set({ phase: 'loading', loadProgress: 0, error: null }),
+    setAutoScroll: (autoScroll) => set({ autoScroll }),
+    reset: () => set({ phase: 'loading', loadProgress: 0, error: null, autoScroll: false }),
 }));
 
 // Per-frame values shared by the canvas and the DOM overlay.
