@@ -11,13 +11,12 @@ const UP = new THREE.Vector3(0, 1, 0);
 // Deterministic per-mark randomness, so a star always sits and spells the same way.
 export const rng = (seed) => () => ((seed = (seed * 1664525 + 1013904223) >>> 0) / 4294967296);
 
-// A mark's (x, y) in 0..1 becomes a direction in the sky. They all gather in one field,
-// straight ahead of where you first look, so the whole constellation is seen at once:
-// x spans the width of that view, y runs from high (0) down to just above the hills (1).
-export const FIELD = { span: 92, low: 12, high: 64 };
-export function markDir(m) {
-    const lon = THREE.MathUtils.degToRad((m.x - 0.5) * FIELD.span);
-    const lat = THREE.MathUtils.degToRad(FIELD.low + (1 - m.y) * (FIELD.high - FIELD.low));
+// A mark's (x, y) in 0..1 becomes a place in the sky: x across a wide field ahead of you,
+// y from high (0) down to just above the hills (1). Layout then nudges them apart.
+export const FIELD = { span: 160, low: 10, high: 74 };
+const D2R = Math.PI / 180;
+
+function dirFrom(lon, lat) {
     return new THREE.Vector3(Math.sin(lon) * Math.cos(lat), Math.sin(lat), -Math.cos(lon) * Math.cos(lat));
 }
 
@@ -29,11 +28,12 @@ function tangents(dir) {
     return { east, north };
 }
 
+const WORD_DROP = 2.4; // how far below its star an answer is written
+
 // Where a mark's words sit: just beneath its star.
-export function wordCenter(m) {
-    const dir = markDir(m);
+function wordCenter(dir) {
     const { north } = tangents(dir);
-    return dir.multiplyScalar(SKY_R).addScaledVector(north, -2.4);
+    return dir.clone().multiplyScalar(SKY_R).addScaledVector(north, -WORD_DROP);
 }
 
 function wrap(ctx, text, maxWidth) {
@@ -51,17 +51,77 @@ function wrap(ctx, text, maxWidth) {
 }
 
 const textCanvas = typeof document !== 'undefined' ? document.createElement('canvas') : null;
+const FONT = 'italic 300 76px "Cormorant Garamond", Georgia, serif';
+const LINE_H = 84;
+
+function measure(answer) {
+    const ctx = textCanvas.getContext('2d', { willReadFrequently: true });
+    ctx.font = FONT;
+    const lines = wrap(ctx, answer, 900).slice(0, 4);
+    const w = Math.max(...lines.map((l) => ctx.measureText(l).width));
+    return { w: w * WORD_SCALE, h: (LINE_H * lines.length + 40) * WORD_SCALE };
+}
+
+// Places every star so no two answers overlap: start from each mark's own (x, y), then
+// push overlapping boxes (star plus its words, on the flattened dome) apart until they rest.
+function layout(marks) {
+    const lonMax = (FIELD.span / 2) * D2R * SKY_R;
+    const [latMin, latMax] = [FIELD.low * D2R * SKY_R, FIELD.high * D2R * SKY_R];
+    const items = marks.map((m) => {
+        const { w, h } = measure(m.answer);
+        const top = 1.2, bottom = WORD_DROP + h / 2;
+        return {
+            x: (m.x - 0.5) * 2 * lonMax,
+            y: latMin + (1 - m.y) * (latMax - latMin),
+            hw: Math.max(w, 2.4) / 2 + 0.8,
+            hh: (top + bottom) / 2 + 0.5,
+            dy: (top - bottom) / 2, // box centre relative to the star
+        };
+    });
+    // Pairwise, so only while it stays cheap; a crowded sky just blends.
+    const rounds = items.length > 600 ? 0 : 160;
+    for (let it = 0; it < rounds; it++) {
+        let moved = false;
+        for (let i = 0; i < items.length; i++) {
+            for (let j = i + 1; j < items.length; j++) {
+                const a = items[i], b = items[j];
+                // Width shrinks toward the zenith, as the dome narrows.
+                const sa = 1 / Math.cos(a.y / SKY_R), sb = 1 / Math.cos(b.y / SKY_R);
+                const dx = b.x - a.x, dy = b.y + b.dy - (a.y + a.dy);
+                const ox = a.hw * sa + b.hw * sb - Math.abs(dx);
+                const oy = a.hh + b.hh - Math.abs(dy);
+                if (ox <= 0 || oy <= 0) continue;
+                moved = true;
+                if (ox / (a.hw + b.hw) < oy / (a.hh + b.hh)) {
+                    const p = (ox / 2 + 0.05) * (dx < 0 ? -1 : 1);
+                    a.x -= p;
+                    b.x += p;
+                } else {
+                    const p = (oy / 2 + 0.05) * (dy < 0 ? -1 : 1);
+                    a.y -= p;
+                    b.y += p;
+                }
+            }
+        }
+        for (const a of items) {
+            a.x = Math.min(lonMax, Math.max(-lonMax, a.x));
+            a.y = Math.min(latMax, Math.max(latMin, a.y));
+        }
+        if (!moved) break;
+    }
+    return items.map((a) => dirFrom(a.x / SKY_R, a.y / SKY_R));
+}
 
 // The answer as lit pixels, in world units around its centre.
 function textPoints(answer, budget, r) {
-    const W = 1100, LH = 84;
+    const W = 1100, LH = LINE_H;
     const ctx = textCanvas.getContext('2d', { willReadFrequently: true });
-    ctx.font = 'italic 300 76px "Cormorant Garamond", Georgia, serif';
+    ctx.font = FONT;
     const lines = wrap(ctx, answer, 900).slice(0, 4);
     const H = LH * lines.length + 40;
     textCanvas.width = W;
     textCanvas.height = H;
-    ctx.font = 'italic 300 76px "Cormorant Garamond", Georgia, serif';
+    ctx.font = FONT;
     ctx.fillStyle = '#fff';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
@@ -89,7 +149,8 @@ export function buildSky(marks) {
 
     // Stars.
     const sPos = new Float32Array(n * 3), sMark = new Float32Array(n), sBirth = new Float32Array(n), sSeed = new Float32Array(n);
-    const dirs = marks.map(markDir);
+    const dirs = layout(marks);
+    const centers = dirs.map(wordCenter);
     marks.forEach((m, i) => {
         dirs[i].clone().multiplyScalar(SKY_R).toArray(sPos, i * 3);
         sMark[i] = i;
@@ -112,7 +173,7 @@ export function buildSky(marks) {
     const v = new THREE.Vector3();
     marks.forEach((m, i) => {
         const r = rng(m.seed + 7);
-        const center = wordCenter(m);
+        const center = centers[i];
         const { east, north } = tangents(dirs[i]);
         for (const [x, y] of sets[i]) {
             v.copy(center).addScaledVector(east, x).addScaledVector(north, y);
@@ -153,7 +214,7 @@ export function buildSky(marks) {
     lines.setAttribute('position', new THREE.Float32BufferAttribute(lPos, 3));
     lines.setAttribute('aBirth', new THREE.Float32BufferAttribute(lBirth, 1));
 
-    return { stars, words, lines, dirs, births };
+    return { stars, words, lines, dirs, centers, births };
 }
 
 // The anonymous sky behind them: scattered stars, crowded along the band of the galaxy.

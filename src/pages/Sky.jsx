@@ -197,6 +197,8 @@ const Sky = () => {
     const navigate = useNavigate();
     const surfaceRef = useRef(null);
     const tipRef = useRef(null);
+    const zoomRef = useRef(null);
+    const apiRef = useRef(null);
     const [marks, setMarks] = useState([]);
     const [focus, setFocus] = useState(null);
     const [hover, setHover] = useState(null);
@@ -223,7 +225,7 @@ const Sky = () => {
 
     return (
         <motion.div className="relative min-h-screen bg-[#020306] text-[#e8e6e1]" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 1.4 }}>
-            <SkyScene marks={marks} focus={focus} surfaceRef={surfaceRef} tipRef={tipRef} onHover={setHover} onPick={pick} />
+            <SkyScene marks={marks} focus={focus} surfaceRef={surfaceRef} tipRef={tipRef} zoomRef={zoomRef} apiRef={apiRef} onHover={setHover} onPick={pick} />
 
             <div ref={tipRef} className="fixed top-0 left-0 z-40 pointer-events-none" style={{ opacity: hover ? 1 : 0, transition: 'opacity 0.3s' }}>
                 {hover && (
@@ -234,7 +236,7 @@ const Sky = () => {
                 )}
             </div>
 
-            <section ref={surfaceRef} className="relative z-10 h-[100svh] select-none cursor-grab active:cursor-grabbing" style={{ touchAction: 'pan-y' }}>
+            <section ref={surfaceRef} className="relative z-10 h-[100svh] select-none cursor-grab active:cursor-grabbing" style={{ touchAction: 'none' }}>
                 <nav className="absolute top-0 left-0 w-full p-6 md:p-8 flex justify-between items-start">
                     <button onClick={() => navigate('/')} className="font-ancient text-xs tracking-[0.3em] text-[#e8e6e1]/60 hover:text-[#e8e6e1] cursor-pointer">
                         ← ITIHASA
@@ -285,20 +287,46 @@ const Sky = () => {
                 )}
 
                 <div className="absolute bottom-0 left-0 w-full pb-[5vh] flex flex-col items-center gap-5 pointer-events-none">
-                    <p className="font-scholar italic text-sm md:text-base text-[#e8e6e1]/45 tracking-wide">drag to look around · touch a star to read it</p>
-                    <button onClick={watch} className="pointer-events-auto px-7 py-3 border border-[#e8e6e1]/30 bg-[#020306]/40 backdrop-blur-sm font-ancient text-xs tracking-[0.25em] hover:bg-[#e8e6e1] hover:text-[#0c0a08] transition-colors cursor-pointer">
+                    <p className="font-scholar italic text-sm md:text-base text-[#e8e6e1]/45 tracking-wide text-center px-6">
+                        scroll or pinch to zoom · drag to look around · touch a star to read it
+                    </p>
+                    <div className="flex flex-wrap justify-center gap-3">
+                        <button onClick={() => apiRef.current?.wander()} className="pointer-events-auto px-7 py-3 border border-[#e8e6e1]/20 bg-[#020306]/40 backdrop-blur-sm font-ancient text-xs tracking-[0.25em] text-[#e8e6e1]/80 hover:border-[#e8e6e1]/60 hover:text-[#e8e6e1] transition-colors cursor-pointer">
+                            [ SHOW ME SOMEONE ]
+                        </button>
+                        <button onClick={watch} className="pointer-events-auto px-7 py-3 border border-[#e8e6e1]/30 bg-[#020306]/40 backdrop-blur-sm font-ancient text-xs tracking-[0.25em] hover:bg-[#e8e6e1] hover:text-[#0c0a08] transition-colors cursor-pointer">
                         {focus ? '[ WATCH THE FILM ]' : '[ ENTER THE FILM TO ANSWER ]'}
+                        </button>
+                    </div>
+                    <button
+                        onClick={() => document.getElementById('below')?.scrollIntoView({ behavior: 'smooth' })}
+                        className="pointer-events-auto mt-1 font-ancient text-[10px] tracking-[0.3em] text-[#e8e6e1]/40 hover:text-[#e8e6e1] cursor-pointer"
+                    >
+                        WHAT THEY SAID ↓
                     </button>
+                </div>
+
+                {/* The lens: how far in you are, with a way in and out. */}
+                <div data-ui className="absolute right-4 md:right-8 top-1/2 -translate-y-1/2 flex flex-col items-center gap-3 font-ancient text-[#e8e6e1]/60">
+                    <button onClick={() => apiRef.current?.zoom(0.7)} aria-label="Zoom in" className="w-8 h-8 border border-[#e8e6e1]/20 bg-[#020306]/40 backdrop-blur-sm hover:text-[#e8e6e1] hover:border-[#e8e6e1]/60 transition-colors cursor-pointer">+</button>
+                    <div className="relative w-px h-28 bg-[#e8e6e1]/15">
+                        <div ref={zoomRef} className="absolute inset-0 bg-[#e8e6e1]/70 origin-bottom" style={{ transform: 'scaleY(0)' }} />
+                    </div>
+                    <button onClick={() => apiRef.current?.zoom(1.4)} aria-label="Zoom out" className="w-8 h-8 border border-[#e8e6e1]/20 bg-[#020306]/40 backdrop-blur-sm hover:text-[#e8e6e1] hover:border-[#e8e6e1]/60 transition-colors cursor-pointer">−</button>
                 </div>
             </section>
 
-            <div className="relative z-10 bg-gradient-to-b from-transparent via-[#020306]/85 to-[#020306]">
+            {/* Below the sky: a dark sheet the sky fades under, so the words stay readable. */}
+            <div id="below" className="relative z-10">
+                <div className="h-40 bg-gradient-to-b from-transparent to-[#020306]/95 pointer-events-none" />
+                <div className="bg-[#020306]/95 backdrop-blur-md pb-16">
                 {focus && (
                     <section id="keepsake" className="flex flex-col items-center px-6 pt-24 pb-8">
                         <Keepsake mark={focus} />
                     </section>
                 )}
                 <Comments chronicle="film" title="WHAT THE OBSERVERS SAID" prompt="Speak about the film. Others will read it here." />
+                </div>
             </div>
         </motion.div>
     );

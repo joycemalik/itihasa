@@ -2,22 +2,38 @@ import { useEffect, useMemo, useRef } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { EffectComposer, Bloom, Noise, Vignette } from '@react-three/postprocessing';
 import * as THREE from 'three';
-import { buildSky, buildDust, buildHills, markDir, wordCenter, BAND, SKY_R } from './build';
+import { buildSky, buildDust, buildHills, BAND, SKY_R } from './build';
 import {
     domeVertex, domeFragment, dustVertex, dustFragment, starVertex, starFragment,
     wordVertex, wordFragment, lineVertex, lineFragment,
 } from './skyShaders';
 
 const clamp = (x, a, b) => Math.min(b, Math.max(a, x));
-const FOV = 72;
-const FOCUS_FOV = 40;
-const PITCH = [-0.12, 1.35];
-const HOME_PITCH = 0.62;
+// Lens: wide enough to hold the whole field, narrow enough to read one answer up close.
+const FOV = 100;
+const FOCUS_FOV = 28;
+const ZOOM = [14, 104];
+const PITCH = [-0.12, 1.45];
+const HOME_PITCH = 0.72;
 
 // Where to look so a mark's star and its words are both in frame.
-function aimAt(m) {
-    const d = markDir(m).multiplyScalar(SKY_R).add(wordCenter(m)).normalize();
+function aimAt(sky, i) {
+    const d = sky.dirs[i].clone().multiplyScalar(SKY_R).add(sky.centers[i]).normalize();
     return { yaw: Math.atan2(-d.x, -d.z), pitch: Math.asin(d.y) };
+}
+
+// Zoom the lens, keeping whatever is under `ndc` (the cursor, or a pinch) where it is.
+function zoomTo(view, fov, ndc, aspect) {
+    const next = clamp(fov, ZOOM[0], ZOOM[1]);
+    const before = Math.tan(THREE.MathUtils.degToRad(view.tFov) / 2);
+    const after = Math.tan(THREE.MathUtils.degToRad(next) / 2);
+    if (ndc) {
+        view.tYaw -= Math.atan(ndc.x * before * aspect) - Math.atan(ndc.x * after * aspect);
+        view.tPitch += Math.atan(ndc.y * before) - Math.atan(ndc.y * after);
+    }
+    view.tFov = next;
+    view.flying = false;
+    view.lastInput = performance.now();
 }
 
 // Shortest way round to an angle.
@@ -94,9 +110,8 @@ function ShootingStars() {
     );
 }
 
-function Observers({ marks, focusIndex, viewRef, tipRef, onHover, hoverRef }) {
+function Observers({ marks, sky, focusIndex, viewRef, tipRef, onHover, hoverRef }) {
     const { camera, size, gl } = useThree();
-    const sky = useMemo(() => buildSky(marks), [marks]);
     const dust = useMemo(() => buildDust(), []);
     const shared = useMemo(() => ({
         uTime: { value: 0 },
@@ -156,9 +171,9 @@ function Observers({ marks, focusIndex, viewRef, tipRef, onHover, hoverRef }) {
                 if (sc.z > 1) return null;
                 return [((sc.x + 1) / 2) * size.width, ((1 - sc.y) / 2) * size.height];
             };
-            marks.forEach((m, i) => {
+            marks.forEach((_, i) => {
                 const s = toScreen(sky.dirs[i].clone().multiplyScalar(SKY_R));
-                const w = toScreen(wordCenter(m));
+                const w = toScreen(sky.centers[i]);
                 for (const [p, reach] of [[s, 34], [w, 70]]) {
                     if (!p) continue;
                     const d = Math.hypot(p[0] - mx, p[1] - my);
@@ -191,7 +206,7 @@ function Observers({ marks, focusIndex, viewRef, tipRef, onHover, hoverRef }) {
 }
 
 // Looking around from where you stand: drag to turn, it glides, and drifts when left alone.
-function Gaze({ viewRef }) {
+function Gaze({ viewRef, zoomRef }) {
     useFrame(({ camera }, delta) => {
         camera.rotation.order = 'YXZ';
         const dt = Math.min(delta, 1 / 20);
@@ -208,7 +223,9 @@ function Gaze({ viewRef }) {
         const ease = 1 - Math.exp(-dt * (view.flying ? 1.6 : 7));
         view.yaw += (view.tYaw - view.yaw) * ease;
         view.pitch += (view.tPitch - view.pitch) * ease;
-        view.fov += (view.tFov - view.fov) * (1 - Math.exp(-dt * 1.2));
+        view.tFov = clamp(view.tFov, ZOOM[0], ZOOM[1]);
+        view.fov += (view.tFov - view.fov) * (1 - Math.exp(-dt * (view.flying ? 1.4 : 5)));
+        if (zoomRef.current) zoomRef.current.style.transform = `scaleY(${(ZOOM[1] - view.fov) / (ZOOM[1] - ZOOM[0])})`;
         if (view.flying && Math.abs(view.tYaw - view.yaw) < 0.01) view.flying = false;
         camera.rotation.set(view.pitch, view.yaw, 0);
         if (Math.abs(camera.fov - view.fov) > 0.01) {
@@ -219,7 +236,8 @@ function Gaze({ viewRef }) {
     return null;
 }
 
-export default function SkyScene({ marks, focus, surfaceRef, tipRef, onHover, onPick }) {
+export default function SkyScene({ marks, focus, surfaceRef, tipRef, zoomRef, apiRef, onHover, onPick }) {
+    const sky = useMemo(() => buildSky(marks), [marks]);
     const hoverRef = useRef(-1);
     const focusIndex = focus ? marks.findIndex((m) => m.number === focus.number) : -1;
     // The gaze: mutated every frame and by every pointer move, so it lives outside React.
@@ -243,7 +261,7 @@ export default function SkyScene({ marks, focus, surfaceRef, tipRef, onHover, on
         }
         view.focus = focusIndex;
         if (focusIndex >= 0) {
-            const { yaw, pitch } = aimAt(marks[focusIndex]);
+            const { yaw, pitch } = aimAt(sky, focusIndex);
             view.tYaw = nearAngle(view.yaw, yaw);
             view.tPitch = pitch;
             view.tFov = FOCUS_FOV;
@@ -256,7 +274,20 @@ export default function SkyScene({ marks, focus, surfaceRef, tipRef, onHover, on
             view.tFov = FOV;
             view.flying = true;
         }
-    }, [marks, focusIndex]);
+    }, [marks, sky, focusIndex]);
+
+    // For the on-screen controls.
+    useEffect(() => {
+        apiRef.current = {
+            zoom: (factor) => zoomTo(viewRef.current, viewRef.current.tFov * factor, null, 1),
+            wander: () => {
+                if (!marks.length) return;
+                let i = Math.floor(Math.random() * marks.length);
+                if (i === focusIndex) i = (i + 1) % marks.length;
+                onPick(marks[i]);
+            },
+        };
+    }, [apiRef, marks, focusIndex, onPick]);
 
     useEffect(() => {
         const el = surfaceRef.current;
@@ -264,6 +295,14 @@ export default function SkyScene({ marks, focus, surfaceRef, tipRef, onHover, on
         if (!el) return;
         let last = null;
         let moved = 0;
+        // Touches currently down, and the pinch they make when there are two.
+        const touches = new Map();
+        let pinch = null;
+        const aspect = () => el.clientWidth / el.clientHeight;
+        const toNdc = (x, y) => {
+            const r = el.getBoundingClientRect();
+            return new THREE.Vector2(((x - r.left) / r.width) * 2 - 1, -((y - r.top) / r.height) * 2 + 1);
+        };
         const ndc = (e) => {
             const r = el.getBoundingClientRect();
             view.mouse.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
@@ -271,6 +310,16 @@ export default function SkyScene({ marks, focus, surfaceRef, tipRef, onHover, on
         const ours = (e) => !e.target.closest('button, a, input, textarea, [data-ui]');
         const down = (e) => {
             if (!ours(e) || e.button > 0) return;
+            if (e.pointerType === 'touch') {
+                touches.set(e.pointerId, { x: e.clientX, y: e.clientY });
+                if (touches.size === 2) {
+                    const [a, b] = [...touches.values()];
+                    pinch = { dist: Math.hypot(a.x - b.x, a.y - b.y) || 1, fov: view.tFov };
+                    view.dragging = false;
+                    moved = 99; // a pinch is never a tap
+                    return;
+                }
+            }
             view.dragging = true;
             view.flying = false;
             last = { x: e.clientX, y: e.clientY, t: performance.now() };
@@ -278,6 +327,15 @@ export default function SkyScene({ marks, focus, surfaceRef, tipRef, onHover, on
             el.setPointerCapture?.(e.pointerId);
         };
         const move = (e) => {
+            if (touches.has(e.pointerId)) touches.set(e.pointerId, { x: e.clientX, y: e.clientY });
+            if (pinch && touches.size === 2) {
+                const [a, b] = [...touches.values()];
+                const dist = Math.hypot(a.x - b.x, a.y - b.y) || 1;
+                const mid = toNdc((a.x + b.x) / 2, (a.y + b.y) / 2);
+                zoomTo(view, (pinch.fov * pinch.dist) / dist, mid, aspect());
+                pinch = { dist, fov: view.tFov };
+                return;
+            }
             ndc(e);
             view.mouseOn = e.pointerType === 'mouse';
             if (!view.dragging || !last) return;
@@ -293,6 +351,11 @@ export default function SkyScene({ marks, focus, surfaceRef, tipRef, onHover, on
             view.lastInput = performance.now();
         };
         const up = (e) => {
+            touches.delete(e.pointerId);
+            if (pinch) {
+                if (touches.size < 2) pinch = null;
+                return;
+            }
             if (!view.dragging) return;
             view.dragging = false;
             view.lastInput = performance.now();
@@ -312,6 +375,40 @@ export default function SkyScene({ marks, focus, surfaceRef, tipRef, onHover, on
             }
         };
         const leave = () => (view.mouseOn = false);
+        // Scroll up to lean in. Scroll down to pull back out, and once the whole field is in
+        // view, the page carries on scrolling down to what the observers said.
+        const wheel = (e) => {
+            if (window.scrollY > 2 && !e.ctrlKey) return;
+            const step = Math.exp(e.deltaY * (e.ctrlKey ? 0.01 : 0.0018));
+            if (!e.ctrlKey && e.deltaY > 0 && view.tFov >= ZOOM[1] - 0.5) return;
+            e.preventDefault();
+            zoomTo(view, view.tFov * step, toNdc(e.clientX, e.clientY), aspect());
+        };
+        const dbl = (e) => {
+            if (!ours(e)) return;
+            zoomTo(view, view.tFov * 0.5, toNdc(e.clientX, e.clientY), aspect());
+        };
+        const key = (e) => {
+            if (e.target.closest?.('input, textarea') || window.scrollY > el.clientHeight * 0.5) return;
+            const pan = THREE.MathUtils.degToRad(view.fov) * 0.08;
+            const acts = {
+                '+': () => zoomTo(view, view.tFov * 0.8, null, 1),
+                '=': () => zoomTo(view, view.tFov * 0.8, null, 1),
+                '-': () => zoomTo(view, view.tFov * 1.25, null, 1),
+                ArrowLeft: () => (view.tYaw += pan),
+                ArrowRight: () => (view.tYaw -= pan),
+                ArrowUp: () => (view.tPitch += pan),
+                ArrowDown: () => (view.tPitch -= pan),
+            };
+            if (!acts[e.key]) return;
+            e.preventDefault();
+            acts[e.key]();
+            view.flying = false;
+            view.lastInput = performance.now();
+        };
+        el.addEventListener('wheel', wheel, { passive: false });
+        el.addEventListener('dblclick', dbl);
+        window.addEventListener('keydown', key);
         el.addEventListener('pointerdown', down);
         el.addEventListener('pointermove', move);
         el.addEventListener('pointerup', up);
@@ -323,6 +420,9 @@ export default function SkyScene({ marks, focus, surfaceRef, tipRef, onHover, on
             el.removeEventListener('pointerup', up);
             el.removeEventListener('pointercancel', up);
             el.removeEventListener('pointerleave', leave);
+            el.removeEventListener('wheel', wheel);
+            el.removeEventListener('dblclick', dbl);
+            window.removeEventListener('keydown', key);
         };
     }, [surfaceRef, marks, onPick]);
 
@@ -336,11 +436,11 @@ export default function SkyScene({ marks, focus, surfaceRef, tipRef, onHover, on
             <color attach="background" args={['#020306']} />
             <Dome />
             {marks.length > 0 && (
-                <Observers marks={marks} focusIndex={focusIndex} viewRef={viewRef} tipRef={tipRef} onHover={onHover} hoverRef={hoverRef} />
+                <Observers marks={marks} sky={sky} focusIndex={focusIndex} viewRef={viewRef} tipRef={tipRef} onHover={onHover} hoverRef={hoverRef} />
             )}
             <ShootingStars />
             <Hills />
-            <Gaze viewRef={viewRef} />
+            <Gaze viewRef={viewRef} zoomRef={zoomRef} />
             <EffectComposer multisampling={0}>
                 <Bloom mipmapBlur luminanceThreshold={0.55} luminanceSmoothing={0.2} intensity={0.9} />
                 <Noise opacity={0.06} />
