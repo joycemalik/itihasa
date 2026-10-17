@@ -10,6 +10,7 @@ export const articles = [
         hoverBorder: 'border-[#8b3a3a]',
         hoverBg: 'bg-[#8b3a3a]',
         effect: 'ink',
+        publishedDate: 'December 12, 2025',
         theme: 'storm', // Added theme property
         content: {
             type: 'contradiction',
