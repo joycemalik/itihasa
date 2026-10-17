@@ -1,7 +1,7 @@
 import React, { useRef, useEffect } from 'react';
 import { Scroll, Compass, Feather } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { GrainTexture, InkBlot, TornPaper } from '../components/VisualEffects';
 import { articles } from '../data/content';
 
@@ -154,8 +154,12 @@ const Home = () => {
 
                             <h2 className="font-ancient text-4xl md:text-6xl text-[#1a1510] mb-6">THE ORIGINS OF BHARAT</h2>
 
-                            <p className="font-hand text-xl text-[#5c5346] mb-8 italic">
+                            <p className="font-hand text-xl text-[#5c5346] mb-2 italic">
                                 "When does a piece of land become an idea?"
+                            </p>
+
+                            <p className="font-ancient text-xs tracking-[0.25em] text-[#8b3a3a] uppercase mb-8">
+                                Published &bull; December 12, 2025
                             </p>
 
                             <div className="font-scholar text-lg md:text-xl text-[#4a3f35] max-w-2xl leading-relaxed mb-10">
@@ -197,8 +201,12 @@ const Home = () => {
 
                             <h2 className="relative font-ancient text-4xl md:text-6xl text-[#e8e6e1] mb-6">WHO IS LOOKING?</h2>
 
-                            <p className="relative font-scholar italic text-xl md:text-2xl text-[#b8ad9e] mb-8">
+                            <p className="relative font-scholar italic text-xl md:text-2xl text-[#b8ad9e] mb-2">
                                 "I am trying to sleep but I cannot stop waking up."
+                            </p>
+
+                            <p className="relative font-ancient text-xs tracking-[0.25em] text-[#e8e6e1]/70 uppercase mb-8">
+                                Published &bull; October 6, 2026
                             </p>
 
                             <div className="relative font-scholar text-lg md:text-xl text-[#8a8073] max-w-2xl leading-relaxed mb-10">
@@ -223,34 +231,157 @@ const Home = () => {
                     </div>
                 </section>
 
-                <footer className="mt-32 relative">
-                    <div className="absolute inset-0 flex items-center justify-center opacity-10 pointer-events-none">
-                        <InkBlot className="w-[800px] h-[800px]" />
+                <footer className="mt-32 relative min-h-[400px] flex items-center justify-center">
+                    {/* Background Ink - Reacts to success */}
+                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none transition-all duration-[2000ms]">
+                        <InkBlot className="w-[800px] h-[800px] text-black opacity-10" id="footer-ink" />
                     </div>
-                    <div className="relative z-10 text-center max-w-2xl mx-auto">
-                        <Scroll className="w-12 h-12 text-[#8b3a3a] mx-auto mb-6" />
-                        <p className="font-scholar text-2xl italic mb-8">
-                            "The dust has settled, but the echoes remain. We just have to listen."
-                        </p>
-                        <form name="subscribe" method="POST" data-netlify="true" className="flex flex-col items-center gap-4">
-                            <input type="hidden" name="form-name" value="subscribe" />
 
-                            <input
-                                type="email"
-                                name="email"
-                                placeholder="Enter your email"
-                                required
-                                className="px-4 py-2 bg-transparent border-b border-[#8b3a3a] text-[#1a1510] placeholder-[#5c5346] font-scholar focus:outline-none focus:border-black transition-colors text-center w-64"
-                            />
-
-                            <button type="submit" className="px-6 py-2 border-b-2 border-[#8b3a3a] font-ancient text-sm tracking-widest text-[#1a1510] hover:text-[#8b3a3a] transition-colors cursor-pointer">
-                                [ SUBSCRIBE FOR UPDATES ]
-                            </button>
-                        </form>
+                    <div className="relative z-10 text-center max-w-2xl mx-auto w-full px-6">
+                        <SubscribeForm />
                     </div>
                 </footer>
             </main>
         </motion.div>
+    );
+};
+
+const SubscribeForm = () => {
+    const [status, setStatus] = React.useState(null); // null | 'loading' | 'success' | 'error'
+    const [subscribed, setSubscribed] = React.useState(false);
+
+    const handleSubscribe = async (e) => {
+        e.preventDefault();
+        const email = e.target.email.value;
+        setStatus('loading');
+
+        try {
+            const res = await fetch('/.netlify/functions/subscribe', {
+                method: 'POST',
+                body: JSON.stringify({ email }),
+            });
+
+            if (res.ok) {
+                setStatus('success');
+                // 1. Trigger the "Event"
+                setTimeout(() => {
+                    setSubscribed(true); // Triggers the animation swap
+
+                    // Update background ink
+                    const ink = document.getElementById('footer-ink');
+                    if (ink) {
+                        ink.classList.remove('text-black', 'opacity-10');
+                        ink.classList.add('text-[#8b3a3a]', 'opacity-20', 'scale-125');
+                    }
+
+                    // Optional: Play a sound
+                    const audio = new Audio('/thunder.mp3');
+                    audio.volume = 0.3;
+                    audio.play().catch(() => { });
+                }, 500);
+            } else {
+                setStatus('error');
+            }
+        } catch (err) {
+            setStatus('error');
+        }
+    };
+
+    return (
+        <AnimatePresence mode="wait">
+            {!subscribed ? (
+                // STATE 1: THE FORM (Standard)
+                <motion.div
+                    key="form"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0, scale: 0.9, filter: "blur(10px)" }}
+                    transition={{ duration: 0.8 }}
+                >
+                    <Scroll className="w-12 h-12 text-[#8b3a3a] mx-auto mb-6" />
+                    <p className="font-scholar text-xl md:text-2xl italic text-[#2c241b]/80 mb-8">
+                        "The dust has settled, but the echoes remain. We just have to listen."
+                    </p>
+
+                    <form onSubmit={handleSubscribe} className="flex flex-col items-center gap-6">
+                        <input
+                            type="email"
+                            name="email"
+                            placeholder="Enter your email"
+                            required
+                            disabled={status === 'loading'}
+                            className="w-full md:w-80 px-4 py-3 bg-transparent border-b-2 border-[#8b3a3a] text-[#1a1510] placeholder-[#5c5346] font-scholar text-xl focus:outline-none focus:border-black transition-colors text-center"
+                        />
+                        <button
+                            type="submit"
+                            disabled={status === 'loading'}
+                            className="px-8 py-3 border border-[#8b3a3a] font-ancient text-sm tracking-[0.3em] hover:bg-[#8b3a3a] hover:text-[#e8e6e1] transition-all duration-500 cursor-pointer uppercase"
+                        >
+                            {status === 'loading' ? 'TRANSMITTING...' : '[ SUBSCRIBE FOR UPDATES ]'}
+                        </button>
+                        {status === 'error' && <p className="text-red-800 text-xs font-ancient mt-4">Transmission Failed. The archive is closed.</p>}
+                    </form>
+                </motion.div>
+            ) : (
+                // STATE 2: THE REVELATION (Extraordinary)
+                <motion.div
+                    key="success"
+                    className="flex flex-col items-center space-y-8"
+                >
+                    {/* The "Seal" slamming down */}
+                    <motion.div
+                        initial={{ scale: 3, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        transition={{
+                            type: "spring",
+                            stiffness: 200,
+                            damping: 20,
+                            delay: 0.2
+                        }}
+                        className="relative"
+                    >
+                        <div className="w-24 h-24 rounded-full border-4 border-[#8b3a3a] flex items-center justify-center bg-[#e8e6e1] relative z-10 shadow-[0_0_30px_rgba(139,58,58,0.4)]">
+                            <Feather className="w-12 h-12 text-[#8b3a3a]" />
+                        </div>
+                        {/* Ripple Effect */}
+                        <motion.div
+                            initial={{ scale: 1, opacity: 0.5 }}
+                            animate={{ scale: 2, opacity: 0 }}
+                            transition={{ duration: 1.5, delay: 0.3 }}
+                            className="absolute inset-0 rounded-full border border-[#8b3a3a]"
+                        />
+                    </motion.div>
+
+                    {/* The Message Fading In */}
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.8, duration: 1 }}
+                        className="space-y-4"
+                    >
+                        <h3 className="font-ancient text-3xl md:text-5xl text-[#1a1510] tracking-widest uppercase">
+                            The Pact is Sealed
+                        </h3>
+
+                        <div className="font-scholar text-xl text-[#5c5346]">
+                            <p>You are no longer an observer.</p>
+                            <p>You are a witness.</p>
+                        </div>
+
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            transition={{ delay: 2, duration: 1 }}
+                            className="pt-6"
+                        >
+                            <p className="text-[#8b3a3a] font-ancient text-sm tracking-[0.2em] border-t border-[#8b3a3a]/30 pt-4 inline-block">
+                                CHECK YOUR FREQUENCY. THE SIGNAL ARRIVES SHORTLY.
+                            </p>
+                        </motion.div>
+                    </motion.div>
+                </motion.div>
+            )}
+        </AnimatePresence>
     );
 };
 

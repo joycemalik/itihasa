@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Volume2, VolumeX, Scroll } from 'lucide-react';
+import { X, Volume2, VolumeX, Scroll, Feather } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import ReactMarkdown from 'react-markdown';
 import { toneManager } from './ToneManager';
 import { bharatChronicle } from '../../data/bharatChronicle';
@@ -165,27 +166,140 @@ const ChronicleView = ({ onClose }) => {
                             "The timeline is still being written. Be the first to read the next chapter."
                         </p>
 
-                        <form name="subscribe" method="POST" data-netlify="true" className="flex flex-col items-center gap-6 w-full max-w-md">
-                            <input type="hidden" name="form-name" value="subscribe" />
-
-                            <input
-                                type="email"
-                                name="email"
-                                placeholder="Enter your email"
-                                required
-                                className="w-full px-6 py-3 bg-transparent border-b border-[#8b3a3a] text-[#e8e6e1] placeholder-[#5c5346] font-scholar text-xl focus:outline-none focus:border-[#d6cfc2] transition-colors text-center"
-                            />
-
-                            <button type="submit" className="mt-8 px-8 py-3 border border-[#8b3a3a] text-[#8b3a3a] font-ancient text-sm tracking-[0.3em] hover:bg-[#8b3a3a] hover:text-[#1a1510] transition-all duration-500 cursor-pointer uppercase">
-                                [ Join the Chronicle ]
-                            </button>
-                        </form>
+                        <SubscribeForm />
                     </div>
 
                     <div className="h-[20vh]"></div>
                 </div>
             </div>
         </>
+    );
+};
+
+const SubscribeForm = () => {
+    const [status, setStatus] = useState(null);
+    const [subscribed, setSubscribed] = useState(false);
+
+    const handleSubscribe = async (e) => {
+        e.preventDefault();
+        const email = e.target.email.value;
+        setStatus('loading');
+
+        try {
+            const res = await fetch('/.netlify/functions/subscribe', {
+                method: 'POST',
+                body: JSON.stringify({ email }),
+            });
+
+            if (res.ok) {
+                setStatus('success');
+                setTimeout(() => {
+                    setSubscribed(true);
+
+                    // Optional: Play a sound
+                    const audio = new Audio('/thunder.mp3');
+                    audio.volume = 0.3;
+                    audio.play().catch(() => { });
+                }, 500);
+            } else {
+                setStatus('error');
+            }
+        } catch (err) {
+            setStatus('error');
+        }
+    };
+
+    return (
+        <AnimatePresence mode="wait">
+            {!subscribed ? (
+                <motion.div
+                    key="form"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0, scale: 0.9, filter: "blur(10px)" }}
+                    transition={{ duration: 0.8 }}
+                    className="w-full max-w-md"
+                >
+                    <form onSubmit={handleSubscribe} className="flex flex-col items-center gap-6 w-full">
+                        <input
+                            type="email"
+                            name="email"
+                            placeholder="Enter your email"
+                            required
+                            disabled={status === 'loading'}
+                            className="w-full px-6 py-3 bg-transparent border-b border-[#8b3a3a] text-[#e8e6e1] placeholder-[#5c5346] font-scholar text-xl focus:outline-none focus:border-[#d6cfc2] transition-colors text-center disabled:opacity-50"
+                        />
+
+                        <button
+                            type="submit"
+                            disabled={status === 'loading'}
+                            className="mt-8 px-8 py-3 border border-[#8b3a3a] text-[#8b3a3a] font-ancient text-sm tracking-[0.3em] hover:bg-[#8b3a3a] hover:text-[#1a1510] transition-all duration-500 cursor-pointer uppercase disabled:opacity-50"
+                        >
+                            {status === 'loading' ? 'TRANSMITTING...' : '[ Join the Chronicle ]'}
+                        </button>
+
+                        {status === 'error' && <p className="text-red-500 text-xs font-ancient tracking-widest mt-4">TRANSMISSION FAILED</p>}
+                    </form>
+                </motion.div>
+            ) : (
+                <motion.div
+                    key="success"
+                    className="flex flex-col items-center space-y-8"
+                >
+                    {/* The "Seal" slamming down */}
+                    <motion.div
+                        initial={{ scale: 3, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        transition={{
+                            type: "spring",
+                            stiffness: 200,
+                            damping: 20,
+                            delay: 0.2
+                        }}
+                        className="relative"
+                    >
+                        <div className="w-24 h-24 rounded-full border-4 border-[#8b3a3a] flex items-center justify-center bg-[#1a1510] relative z-10 shadow-[0_0_30px_rgba(139,58,58,0.6)]">
+                            <Feather className="w-12 h-12 text-[#8b3a3a]" />
+                        </div>
+                        {/* Ripple Effect */}
+                        <motion.div
+                            initial={{ scale: 1, opacity: 0.5 }}
+                            animate={{ scale: 2, opacity: 0 }}
+                            transition={{ duration: 1.5, delay: 0.3 }}
+                            className="absolute inset-0 rounded-full border border-[#8b3a3a]"
+                        />
+                    </motion.div>
+
+                    {/* The Message Fading In */}
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.8, duration: 1 }}
+                        className="space-y-4 text-center"
+                    >
+                        <h3 className="font-ancient text-3xl md:text-5xl text-[#e8e6e1] tracking-widest uppercase">
+                            The Pact is Sealed
+                        </h3>
+
+                        <div className="font-scholar text-xl text-[#d6cfc2]/80">
+                            <p>You are no longer an observer.</p>
+                            <p>You are a witness.</p>
+                        </div>
+
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            transition={{ delay: 2, duration: 1 }}
+                            className="pt-6"
+                        >
+                            <p className="text-[#8b3a3a] font-ancient text-sm tracking-[0.2em] border-t border-[#8b3a3a]/30 pt-4 inline-block">
+                                CHECK YOUR FREQUENCY. THE SIGNAL ARRIVES SHORTLY.
+                            </p>
+                        </motion.div>
+                    </motion.div>
+                </motion.div>
+            )}
+        </AnimatePresence>
     );
 };
 
