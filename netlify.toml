@@ -1,10 +1,14 @@
 [build]
   command = "npm run build"
   publish = "dist"
+  functions = "netlify/functions"
 
 [dev]
-  command = "npm run dev"
+  framework = "#auto"
+  targetPort = 5173
+  port = 8888
 
+# Single-page app: every route (/sky/14, /film, ...) is served by index.html.
 [[redirects]]
   from = "/*"
   to = "/index.html"

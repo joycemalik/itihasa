@@ -25,3 +25,12 @@ dist-ssr
 
 # Source 3D models for scripts/bake-points.mjs (too large for git)
 models_src/
+
+# Local Netlify folder
+.netlify
+
+# Secrets (set BREVO_API_KEY in Netlify's environment variables instead)
+.env
+
+# Netlify dev's Deno lockfile for edge functions
+deno.lock

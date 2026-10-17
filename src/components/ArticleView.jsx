@@ -43,9 +43,16 @@ const ArticleView = ({ article, onClose, onStartJourney }) => {
                     <div className={`relative z-10 w-full max-w-5xl mx-auto text-center md:text-left space-y-8 md:space-y-12 my-20 pt-16 md:pt-0 ${isStormTheme ? 'stone-text' : ''}`}>
 
                         {/* Title Section */}
-                        <div className="inline-flex items-center justify-center md:justify-start gap-3 text-[#8b3a3a] font-ancient text-lg tracking-[0.3em] border-b border-[#8b3a3a] pb-2 mb-4 w-full md:w-auto">
-                            {FrontIcon && <FrontIcon className="w-6 h-6" />}
-                            <span>{front.category}</span>
+                        <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 text-[#8b3a3a] font-ancient text-sm md:text-base tracking-[0.3em] border-b border-[#8b3a3a]/60 pb-2 mb-4 w-full md:w-auto">
+                            <div className="inline-flex items-center gap-3">
+                                {FrontIcon && <FrontIcon className="w-5 h-5" />}
+                                <span>{front.category}</span>
+                            </div>
+                            {article.publishedDate && (
+                                <span className="text-[#a8a29e] tracking-[0.2em] text-xs">
+                                    &bull; {article.publishedDate}
+                                </span>
+                            )}
                         </div>
 
                         <h1 className="font-ancient text-4xl md:text-5xl leading-tight text-shadow-glow break-words px-2">
