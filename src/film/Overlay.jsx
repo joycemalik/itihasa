@@ -4,7 +4,9 @@ import { scenes, FILM_TITLE } from './timeline';
 import { runtime, useExperience } from './runtime';
 import { score } from './audio';
 import Opener from './Opener';
-import { getMark } from '../lib/supabase';
+import EndSky from './EndSky';
+import { getMark, getMarks } from '../lib/supabase';
+import { shareStar } from '../lib/share';
 
 const ROMAN = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII', 'XIII', 'XIV'];
 const clamp01 = (x) => Math.min(1, Math.max(0, x));
@@ -17,6 +19,9 @@ export default function Overlay() {
     const phase = useExperience((s) => s.phase);
     const loadProgress = useExperience((s) => s.loadProgress);
     const error = useExperience((s) => s.error);
+    const autoScroll = useExperience((s) => s.autoScroll);
+    const [marks, setMarks] = useState([]);
+    const [copied, setCopied] = useState(false);
     const [line, setLine] = useState({ key: null, text: '', scene: 0 });
     const [chapter, setChapter] = useState(-1);
     const [muted, setMuted] = useState(false);
@@ -41,6 +46,16 @@ export default function Overlay() {
             }
         }).catch(() => {});
     }, [myMark]);
+    // The whole sky, for the closing credit. Fetched once the lights go out.
+    useEffect(() => {
+        if (phase !== 'story') return;
+        getMarks().then(setMarks).catch(() => {});
+    }, [phase, myMark]);
+    const share = async () => {
+        if ((await shareStar(myMark)) !== 'copied') return;
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+    };
     const onOpenerDone = (mark, late) => {
         if (mark) setMyMark(String(mark));
         if (!late) setOpened(true);
@@ -179,13 +194,25 @@ export default function Overlay() {
                 </div>
             )}
             <div ref={endRef} className="exp-end">
+                <EndSky marks={marks} mine={myMark} shownRef={endRef} />
                 <div className="exp-end-title">{FILM_TITLE}</div>
+                <div className="exp-end-links">
+                    {myMark && (
+                        <button className="exp-mystar" onClick={() => navigate(`/sky/${myMark}`)}>
+                            your star · No. {myMark.padStart(4, '0')}
+                        </button>
+                    )}
+                    <div className="exp-end-row">
+                        <button className="exp-endlink" onClick={share}>
+                            {copied ? 'link copied' : myMark ? 'share your star' : 'share the film'}
+                        </button>
+                        <i />
+                        <button className="exp-endlink" onClick={() => navigate('/sky')}>
+                            {marks.length > 1 ? `all ${marks.length} observers` : 'the sky of observers'}
+                        </button>
+                    </div>
+                </div>
                 <button className="exp-return" onClick={() => navigate('/')}>return</button>
-                {myMark && (
-                    <button className="exp-mystar" onClick={() => navigate(`/sky/${myMark}`)}>
-                        your star · No. {myMark.padStart(4, '0')}
-                    </button>
-                )}
             </div>
 
             {phase !== 'loading' && (
@@ -208,6 +235,18 @@ export default function Overlay() {
                     </span>
                     {muted ? 'sound off' : 'sound on'}
                 </button>
+            )}
+
+            {story && (
+                <label className={`exp-auto ${autoScroll ? 'is-on' : ''}`}>
+                    <input
+                        type="checkbox"
+                        checked={autoScroll}
+                        onChange={(e) => useExperience.getState().setAutoScroll(e.target.checked)}
+                    />
+                    <span className="exp-auto-box" />
+                    auto scroll
+                </label>
             )}
 
             {phase === 'intro' && opened && <div className="exp-hint">pull the light down</div>}
