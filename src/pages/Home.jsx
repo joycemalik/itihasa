@@ -231,6 +231,20 @@ const Home = () => {
                     </div>
                 </section>
 
+                {/* Chronicle III: placeholder only */}
+                <section id="chronicle-three" className="pb-20 mb-32">
+                    <div className="text-center mb-12">
+                        <h3 className="font-hand text-2xl text-[#8b3a3a] mb-2 tracking-widest">CHRONICLE III</h3>
+                    </div>
+
+                    <div className="max-w-4xl mx-auto p-12 md:p-16 border border-dashed border-[#8b3a3a]/40 flex flex-col items-center text-center">
+                        <Feather className="w-10 h-10 text-[#8b3a3a]/70 mb-6" />
+                        <p className="font-ancient text-sm tracking-[0.25em] text-[#8b3a3a] uppercase">
+                            Under writing stage
+                        </p>
+                    </div>
+                </section>
+
                 <footer className="mt-32 relative min-h-[400px] flex items-center justify-center">
                     {/* Background Ink - Reacts to success */}
                     <div className="absolute inset-0 flex items-center justify-center pointer-events-none transition-all duration-[2000ms]">
